@@ -1,3 +1,4 @@
+%%html
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -64,19 +65,25 @@
 <body>
   <h1>그래프 기반 자산 전쟁 시뮬레이션</h1>
   <div id="controls">
+    <!-- Language Selection -->
+    <div id="languageSelect" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+      <strong id="languageLabel">Language:</strong>
+      <label><input type="radio" name="lang" value="en" /> English</label>
+      <label><input type="radio" name="lang" value="ko" checked /> 한국어</label>
+    </div>
     <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
-      <label>노드 수: <input type="number" id="numNodes" value="10" min="2" max="50" /></label>
-      <label id="connectionProbWrapper">연결 확률: <input type="number" id="connectionProb" value="0.3" step="0.05" min="0" max="1" /></label>
-      <label>스텝 수: <input type="number" id="numSteps" value="30" min="1" max="1000" /></label>
-      <label>포인트 비율: <input type="number" id="pointRatio" value="0.1" step="0.01" min="0" max="1" /></label>
-      <label>그래프 동적 갱신 임계값: <input type="number" id="chartUpdateThreshold" value="100" min="1" step="1" /></label>
+      <label id="numNodesLabel">노드 수: <input type="number" id="numNodes" value="10" min="2" max="50" /></label>
+      <label id="connectionProbWrapper"><span id="connectionProbLabel">연결 확률:</span> <input type="number" id="connectionProb" value="0.3" step="0.05" min="0" max="1" /></label>
+      <label id="numStepsLabel">스텝 수: <input type="number" id="numSteps" value="30" min="1" max="1000" /></label>
+      <label id="pointRatioLabel">포인트 비율: <input type="number" id="pointRatio" value="0.1" step="0.01" min="0" max="1" /></label>
+      <label id="chartThresholdLabel"><span id="chartThresholdText">그래프 동적 갱신 임계값:</span> <input type="number" id="chartUpdateThreshold" value="100" min="1" step="1" /></label>
       <button id="startBtn">시작</button>
       <button id="stepBtn">한 스텝</button>
       <button id="resetBtn">리셋</button>
     </div>
     <!-- Agent type counts configuration -->
     <div id="agentConfig" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:10px;">
-      <strong style="margin-right:5px;">에이전트 구성:</strong>
+      <strong id="agentConfigTitle" style="margin-right:5px;">에이전트 구성:</strong>
       <label>RLAgent: <input type="number" id="countRL" min="0" step="1" value="2" /></label>
       <label>GreedyBot: <input type="number" id="countGreedy" min="0" step="1" value="2" /></label>
       <label>TurtleBot: <input type="number" id="countTurtle" min="0" step="1" value="2" /></label>
@@ -85,25 +92,25 @@
     </div>
     <!-- Connection mode settings -->
     <div id="connectionConfig" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:10px;">
-      <strong style="margin-right:5px;">연결 방식:</strong>
-      <label><input type="radio" name="connMode" value="probability" checked /> 일률 확률</label>
-      <label><input type="radio" name="connMode" value="degree" /> 노드별 degree</label>
+      <strong id="connectionConfigTitle" style="margin-right:5px;">연결 방식:</strong>
+      <label><input type="radio" name="connMode" value="probability" checked /> <span id="connProbLabel">일률 확률</span></label>
+      <label><input type="radio" name="connMode" value="degree" /> <span id="connDegreeLabel">노드별 degree</span></label>
       <!-- Per-node degree inputs (hidden by default) -->
       <div id="degreeInputs" style="display:none; flex-wrap:wrap; gap:5px; align-items:center;"></div>
     </div>
     <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:10px;">
-      <span>시각화 모드:</span>
-      <label><input type="radio" name="vizMode" value="random" checked /> 무작위 샘플링</label>
-      <label><input type="radio" name="vizMode" value="focus" /> 특수 에이전트 집중</label>
+      <span id="vizModeTitle">시각화 모드:</span>
+      <label><input type="radio" name="vizMode" value="random" checked /> <span id="vizRandomLabel">무작위 샘플링</span></label>
+      <label><input type="radio" name="vizMode" value="focus" /> <span id="vizFocusLabel">특수 에이전트 집중</span></label>
       <div id="randomControls" style="display:flex; gap:5px; align-items:center;">
-        <label>표시 확률: <input type="number" id="showProb" value="0.3" step="0.1" min="0" max="1" /></label>
+        <label id="showProbLabel">표시 확률: <input type="number" id="showProb" value="0.3" step="0.1" min="0" max="1" /></label>
       </div>
       <div id="focusControls" style="display:none; gap:5px; align-items:center;">
-        <label>특수 에이전트 ID: <input type="number" id="focusId" value="0" min="0" /></label>
+        <label id="focusIdLabel">특수 에이전트 ID: <input type="number" id="focusId" value="0" min="0" /></label>
       </div>
     </div>
     <div style="margin-top:10px;">
-      <strong>전략 레전드:</strong>
+      <strong id="legendTitle">전략 레전드:</strong>
       <span style="color:#e74c3c;">■ RLAgent</span>
       <span style="color:#27ae60;">■ Greedy</span>
       <span style="color:#2980b9;">■ Turtle</span>
@@ -124,6 +131,70 @@
   </div>
 
   <script>
+    // Define language map for UI text
+    const languageMap = {
+      en: {
+        title: "Asset War Simulation",
+        languageLabel: "Language:",
+        numNodesLabel: "Number of Nodes:",
+        connectionProbLabel: "Connection Probability:",
+        numStepsLabel: "Number of Steps:",
+        pointRatioLabel: "Point Ratio:",
+        chartThresholdText: "Chart Update Threshold:",
+        startBtnText: "Start",
+        stepBtnText: "One Step",
+        resetBtnText: "Reset",
+        agentConfigTitle: "Agent Configuration:",
+        connectionConfigTitle: "Connection Mode:",
+        connProbLabel: "Uniform Probability",
+        connDegreeLabel: "Per-node Degree",
+        vizModeTitle: "Visualization Mode:",
+        vizRandomLabel: "Random Sampling",
+        vizFocusLabel: "Focus on Special Agent",
+        showProbLabel: "Display Probability:",
+        focusIdLabel: "Special Agent ID:",
+        legendTitle: "Strategy Legend:",
+        statusInitial: "Initialization Required",
+        statusProgress: (step) => `${step} Steps Completed`,
+        chartTitle: "Asset Change of Each Node",
+        chartXAxis: "Step",
+        chartYAxis: "Asset",
+        downloadChartBtnText: "Download Chart PNG",
+        downloadJsonBtnText: "Download JSON",
+        downloadCsvBtnText: "Download CSV"
+      },
+      ko: {
+        title: "그래프 기반 자산 전쟁 시뮬레이션",
+        languageLabel: "언어:",
+        numNodesLabel: "노드 수:",
+        connectionProbLabel: "연결 확률:",
+        numStepsLabel: "스텝 수:",
+        pointRatioLabel: "포인트 비율:",
+        chartThresholdText: "그래프 동적 갱신 임계값:",
+        startBtnText: "시작",
+        stepBtnText: "한 스텝",
+        resetBtnText: "리셋",
+        agentConfigTitle: "에이전트 구성:",
+        connectionConfigTitle: "연결 방식:",
+        connProbLabel: "일률 확률",
+        connDegreeLabel: "노드별 degree",
+        vizModeTitle: "시각화 모드:",
+        vizRandomLabel: "무작위 샘플링",
+        vizFocusLabel: "특수 에이전트 집중",
+        showProbLabel: "표시 확률:",
+        focusIdLabel: "특수 에이전트 ID:",
+        legendTitle: "전략 레전드:",
+        statusInitial: "초기화 필요",
+        statusProgress: (step) => `${step} 스텝 진행됨`,
+        chartTitle: "각 노드의 자산 변화",
+        chartXAxis: "스텝",
+        chartYAxis: "자산",
+        downloadChartBtnText: "그래프 PNG 다운로드",
+        downloadJsonBtnText: "JSON 다운로드",
+        downloadCsvBtnText: "CSV 다운로드"
+      }
+    };
+
     // Color palette for different agent types
     const TYPE_COLORS = {
       'RLAgent': '#e74c3c',    // red
@@ -143,6 +214,8 @@
         this.env = null;
         this.lastSuccess = false;
         this.lastAction = null;
+        // track how often this agent is attacked by each neighbour
+        this.attackedByCounts = {};
       }
       /**
        * Decide attack/defend ratios for each neighbor.
@@ -151,13 +224,28 @@
        */
       act() {
         const actions = {};
-        if (this.neighbors.length === 0) {
+        const nbs = this.neighbors.slice();
+        // if no neighbours, nothing to do
+        if (nbs.length === 0) {
           this.lastAction = actions;
           return actions;
         }
-        // default: attack first neighbor with 50% of points, no defense
-        const target = this.neighbors[Math.floor(Math.random() * this.neighbors.length)];
-        actions[target] = { attackRatio: 0.5, defendRatio: 0.0 };
+        // pick a random neighbour to attack
+        const attackIndex = Math.floor(Math.random() * nbs.length);
+        const attackTarget = nbs[attackIndex];
+        // assign 50% of points to attack
+        actions[attackTarget] = { attackRatio: 0.5, defendRatio: 0.0 };
+        // pick a different neighbour to defend if possible
+        const defCandidates = nbs.filter(n => n !== attackTarget);
+        if (defCandidates.length > 0) {
+          const defenseTarget = defCandidates[Math.floor(Math.random() * defCandidates.length)];
+          // add defence allocation, combine if same id already exists
+          if (!actions[defenseTarget]) {
+            actions[defenseTarget] = { attackRatio: 0.0, defendRatio: 0.5 };
+          } else {
+            actions[defenseTarget].defendRatio += 0.5;
+          }
+        }
         this.lastAction = actions;
         return actions;
       }
@@ -173,22 +261,24 @@
     class GreedyBot extends Agent {
       act() {
         const actions = {};
-        if (this.neighbors.length === 0) {
+        const nbs = this.neighbors.slice();
+        if (nbs.length === 0) {
           this.lastAction = actions;
           return actions;
         }
-        // pick neighbour with highest asset
-        let maxAsset = -Infinity;
-        let target = null;
-        for (const j of this.neighbors) {
-          const asset = this.env.agents[j].asset;
-          if (asset > maxAsset) {
-            maxAsset = asset;
-            target = j;
-          }
+        // sort neighbours by their asset values descending
+        const sorted = nbs.slice().sort((a, b) => this.env.agents[b].asset - this.env.agents[a].asset);
+        const attackTarget = sorted[0];
+        if (sorted.length > 1) {
+          const defendTarget = sorted[1];
+          // attack richest with 90%
+          actions[attackTarget] = { attackRatio: 0.9, defendRatio: 0.0 };
+          // defend against second richest with 10%
+          actions[defendTarget] = { attackRatio: 0.0, defendRatio: 0.1 };
+        } else {
+          // only one neighbour: use all points to attack
+          actions[attackTarget] = { attackRatio: 1.0, defendRatio: 0.0 };
         }
-        // attack with 90% of points on that neighbour
-        actions[target] = { attackRatio: 0.9, defendRatio: 0.0 };
         this.lastAction = actions;
         return actions;
       }
@@ -196,13 +286,34 @@
     class TurtleBot extends Agent {
       act() {
         const actions = {};
-        if (this.neighbors.length === 0) {
+        const nbs = this.neighbors.slice();
+        if (nbs.length === 0) {
           this.lastAction = actions;
           return actions;
         }
-        // minimal attack: 10% to a random neighbour
-        const target = this.neighbors[Math.floor(Math.random() * this.neighbors.length)];
-        actions[target] = { attackRatio: 0.1, defendRatio: 0.0 };
+        // sort neighbours by asset descending to find richest and second richest
+        const sorted = nbs.slice().sort((a, b) => this.env.agents[b].asset - this.env.agents[a].asset);
+        const richest = sorted[0];
+        // attack richest with 10%
+        actions[richest] = { attackRatio: 0.1, defendRatio: 0.0 };
+        if (sorted.length > 1) {
+          const second = sorted[1];
+          // defend 60% against richest neighbour
+          if (!actions[richest]) {
+            actions[richest] = { attackRatio: 0.0, defendRatio: 0.6 };
+          } else {
+            actions[richest].defendRatio = (actions[richest].defendRatio || 0) + 0.6;
+          }
+          // defend 30% against second richest neighbour
+          if (!actions[second]) {
+            actions[second] = { attackRatio: 0.0, defendRatio: 0.3 };
+          } else {
+            actions[second].defendRatio = (actions[second].defendRatio || 0) + 0.3;
+          }
+        } else {
+          // only one neighbour: use all remaining 90% to defend same neighbour
+          actions[richest].defendRatio = (actions[richest].defendRatio || 0) + 0.9;
+        }
         this.lastAction = actions;
         return actions;
       }
@@ -210,13 +321,37 @@
     class RandomBot extends Agent {
       act() {
         const actions = {};
-        if (this.neighbors.length === 0) {
+        const nbs = this.neighbors.slice();
+        if (nbs.length === 0) {
           this.lastAction = actions;
           return actions;
         }
+        // choose a random neighbour to attack
+        const attackTarget = nbs[Math.floor(Math.random() * nbs.length)];
+        // random attack ratio between 0 and 1
         const attackRatio = Math.random();
-        const target = this.neighbors[Math.floor(Math.random() * this.neighbors.length)];
-        actions[target] = { attackRatio: attackRatio, defendRatio: 0.0 };
+        actions[attackTarget] = { attackRatio: attackRatio, defendRatio: 0.0 };
+        // distribute the remaining points to defence of random neighbours (not the attack target)
+        const leftover = 1.0 - attackRatio;
+        const defCandidates = nbs.filter(n => n !== attackTarget);
+        if (leftover > 0 && defCandidates.length > 0) {
+          // randomly decide number of defence targets (at least one)
+          const numDef = Math.floor(Math.random() * defCandidates.length) + 1;
+          // shuffle candidates and pick the first numDef
+          const shuffled = defCandidates.slice().sort(() => Math.random() - 0.5);
+          const selected = shuffled.slice(0, numDef);
+          // generate random weights
+          const weights = [];
+          for (let i = 0; i < selected.length; i++) {
+            weights.push(Math.random());
+          }
+          const sumw = weights.reduce((a, b) => a + b, 0);
+          for (let i = 0; i < selected.length; i++) {
+            const nb = selected[i];
+            const portion = (weights[i] / sumw) * leftover;
+            actions[nb] = { attackRatio: 0.0, defendRatio: portion };
+          }
+        }
         this.lastAction = actions;
         return actions;
       }
@@ -224,37 +359,61 @@
     class AdaptiveBot extends Agent {
       constructor(id) {
         super(id);
+        // initial attack ratio between 0.1 and 0.9
         this.alpha = 0.5;
-        this.adjustment = 0.05;
       }
       act() {
         const actions = {};
-        if (this.neighbors.length === 0) {
+        const nbs = this.neighbors.slice();
+        if (nbs.length === 0) {
           this.lastAction = actions;
           return actions;
         }
-        // pick richest neighbour
+        // determine richest neighbour as attack target
         let maxAsset = -Infinity;
-        let target = null;
-        for (const j of this.neighbors) {
+        let richest = nbs[0];
+        for (const j of nbs) {
           const asset = this.env.agents[j].asset;
           if (asset > maxAsset) {
             maxAsset = asset;
-            target = j;
+            richest = j;
           }
         }
-        const a = Math.max(0.05, Math.min(0.95, this.alpha));
-        actions[target] = { attackRatio: a, defendRatio: 0.0 };
+        // clamp alpha to [0.1, 0.9]
+        const a = Math.max(0.1, Math.min(0.9, this.alpha));
+        actions[richest] = { attackRatio: a, defendRatio: 0.0 };
+        // allocate the remaining proportion to defence against the most frequent attacker
+        const leftover = 1.0 - a;
+        if (leftover > 0) {
+          // find neighbour who attacked this agent most frequently
+          let defenceTarget = null;
+          let maxCount = -1;
+          for (const j of nbs) {
+            const count = (this.attackedByCounts && this.attackedByCounts[j]) ? this.attackedByCounts[j] : 0;
+            if (count > maxCount) {
+              maxCount = count;
+              defenceTarget = j;
+            }
+          }
+          // if no one has attacked yet, default to richest
+          if (defenceTarget === null) defenceTarget = richest;
+          if (!actions[defenceTarget]) {
+            actions[defenceTarget] = { attackRatio: 0.0, defendRatio: leftover };
+          } else {
+            actions[defenceTarget].defendRatio = (actions[defenceTarget].defendRatio || 0) + leftover;
+          }
+        }
         this.lastAction = actions;
         return actions;
       }
       observe(success, reward) {
         super.observe(success, reward);
         if (this.lastAction === null) return;
+        // adjust alpha by 0.1 based on success of last step
         if (success) {
-          this.alpha = Math.min(0.95, this.alpha + this.adjustment);
+          this.alpha = Math.min(0.9, this.alpha + 0.1);
         } else {
-          this.alpha = Math.max(0.05, this.alpha - this.adjustment);
+          this.alpha = Math.max(0.1, this.alpha - 0.1);
         }
       }
     }
@@ -262,57 +421,64 @@
     class RLAgent extends Agent {
       constructor(id) {
         super(id);
-        this.qValues = {}; // action -> q-value, action is neighbour id or null
+        // qValues: map from action key ('A_j','D_j','N') to Q-value
+        this.qValues = {};
         this.lr = 0.2;
         this.epsilon = 0.1;
         this.lastChosenAction = null;
       }
       act() {
-        // ensure q-values for all neighbours and defend action
-        for (const n of this.neighbors) {
-          if (!(n in this.qValues)) this.qValues[n] = 0.0;
+        const actions = {};
+        const nbs = this.neighbors.slice();
+        // ensure q-values for attack and defence on each neighbour and the no-op action
+        for (const n of nbs) {
+          const aKey = `A_${n}`;
+          const dKey = `D_${n}`;
+          if (!(aKey in this.qValues)) this.qValues[aKey] = 0.0;
+          if (!(dKey in this.qValues)) this.qValues[dKey] = 0.0;
         }
-        if (!(null in this.qValues)) this.qValues[null] = 0.0;
-        let action;
+        if (!('N' in this.qValues)) this.qValues['N'] = 0.0;
+        // epsilon-greedy selection over all available action keys
+        let actionKey;
+        const keys = Object.keys(this.qValues);
         if (Math.random() < this.epsilon) {
-          // explore
-          const keys = Object.keys(this.qValues);
-          action = keys[Math.floor(Math.random() * keys.length)];
-          // keys from Object.keys are strings, convert 'null' to actual null and numeric ids
-          if (action === 'null') action = null;
-          else action = parseInt(action);
+          // explore: pick random key
+          actionKey = keys[Math.floor(Math.random() * keys.length)];
         } else {
-          // exploit
+          // exploit: pick key with maximum Q-value
           let maxQ = -Infinity;
-          let candidates = [];
-          for (const key in this.qValues) {
-            const q = this.qValues[key];
+          let cands = [];
+          for (const k of keys) {
+            const q = this.qValues[k];
             if (q > maxQ) {
               maxQ = q;
-              candidates = [key];
+              cands = [k];
             } else if (q === maxQ) {
-              candidates.push(key);
+              cands.push(k);
             }
           }
-          action = candidates[Math.floor(Math.random() * candidates.length)];
-          if (action === 'null') action = null;
-          else action = parseInt(action);
+          actionKey = cands[Math.floor(Math.random() * cands.length)];
         }
-        const actions = {};
-        if (action === null) {
-          // no attack
-        } else {
-          actions[action] = { attackRatio: 1.0, defendRatio: 0.0 };
+        // map the chosen key into an action mapping
+        if (actionKey === 'N') {
+          // no action: both attack and defend ratios are zero
+        } else if (actionKey.startsWith('A_')) {
+          const idStr = actionKey.split('_')[1];
+          const j = parseInt(idStr);
+          actions[j] = { attackRatio: 1.0, defendRatio: 0.0 };
+        } else if (actionKey.startsWith('D_')) {
+          const idStr = actionKey.split('_')[1];
+          const j = parseInt(idStr);
+          actions[j] = { attackRatio: 0.0, defendRatio: 1.0 };
         }
-        this.lastChosenAction = action;
+        this.lastChosenAction = actionKey;
         this.lastAction = actions;
         return actions;
       }
       observe(success, reward) {
         super.observe(success, reward);
-        if (this.lastChosenAction === null) return;
+        if (!this.lastChosenAction) return;
         const key = this.lastChosenAction;
-        // initialize q-value if not present
         if (!(key in this.qValues)) this.qValues[key] = 0.0;
         const oldQ = this.qValues[key];
         const r = reward;
@@ -331,7 +497,7 @@
        * @param {Array} distribution Fractional distribution of agent types, or computed from counts.
        * @param {number} delta Fraction of effective damage that is transferred.
        */
-      constructor(numNodes, connectionMode, connectionData, agentTypes, distribution, pointRatio, delta = 0.1) {
+      constructor(numNodes, connectionMode, connectionData, agentTypes, distribution, pointRatio, delta = 0.2) {
         this.numNodes = numNodes;
         this.connectionMode = connectionMode;
         this.connectionData = connectionData;
@@ -520,6 +686,16 @@
             flows.push({ i, j, transfer });
           }
 
+        // record attacks for adaptive bots: each victim notes which attacker hit them
+        for (const flow of flows) {
+          const attackerId = flow.i;
+          const victimId = flow.j;
+          const victimAgent = this.agents[victimId];
+          if (victimAgent && typeof victimAgent.recordAttack === 'function') {
+            victimAgent.recordAttack(attackerId);
+          }
+        }
+
         // update assets
         for (const id in this.agents) {
           const agent = this.agents[id];
@@ -555,6 +731,11 @@
           }
           if (agent instanceof RLAgent) {
             agent.qValues = {};
+            agent.lastChosenAction = null;
+          }
+          // clear attack history counts
+          if (agent.attackedByCounts) {
+            agent.attackedByCounts = {};
           }
         }
         // reset asset history and record initial state
@@ -833,7 +1014,7 @@
           plugins: {
             title: {
               display: true,
-              text: '각 노드의 자산 변화'
+              text: languageMap[currentLanguage].chartTitle // Use localized text
             },
             legend: {
               display: false
@@ -843,13 +1024,13 @@
             x: {
               title: {
                 display: true,
-                text: '스텝'
+                text: languageMap[currentLanguage].chartXAxis // Use localized text
               }
             },
             y: {
               title: {
                 display: true,
-                text: '자산'
+                text: languageMap[currentLanguage].chartYAxis // Use localized text
               }
             }
           }
@@ -907,6 +1088,52 @@
     const statusDiv = document.getElementById('status');
     const tooltip = document.getElementById('tooltip');
 
+    let currentLanguage = 'ko'; // default language
+
+    function updateUI(lang) {
+      currentLanguage = lang;
+      const text = languageMap[lang];
+      document.title = text.title;
+      document.querySelector('h1').textContent = text.title;
+      document.getElementById('languageLabel').textContent = text.languageLabel;
+      document.getElementById('numNodesLabel').childNodes[0].textContent = text.numNodesLabel + ' ';
+      document.getElementById('connectionProbLabel').textContent = text.connectionProbLabel + ' ';
+      document.getElementById('numStepsLabel').childNodes[0].textContent = text.numStepsLabel + ' ';
+      document.getElementById('pointRatioLabel').childNodes[0].textContent = text.pointRatioLabel + ' ';
+      document.getElementById('chartThresholdText').textContent = text.chartThresholdText + ' ';
+      document.getElementById('startBtn').textContent = text.startBtnText;
+      document.getElementById('stepBtn').textContent = text.stepBtnText;
+      document.getElementById('resetBtn').textContent = text.resetBtnText;
+      document.getElementById('agentConfigTitle').textContent = text.agentConfigTitle;
+      document.getElementById('connectionConfigTitle').textContent = text.connectionConfigTitle;
+      document.getElementById('connProbLabel').textContent = text.connProbLabel;
+      document.getElementById('connDegreeLabel').textContent = text.connDegreeLabel;
+      document.getElementById('vizModeTitle').textContent = text.vizModeTitle;
+      document.getElementById('vizRandomLabel').textContent = text.vizRandomLabel;
+      document.getElementById('vizFocusLabel').textContent = text.vizFocusLabel;
+      document.getElementById('showProbLabel').childNodes[0].textContent = text.showProbLabel + ' ';
+      document.getElementById('focusIdLabel').childNodes[0].textContent = text.focusIdLabel + ' ';
+      document.getElementById('legendTitle').textContent = text.legendTitle;
+      // Update status text based on current step
+      if (env && env.stepCount > 0) {
+        statusDiv.textContent = text.statusProgress(env.stepCount);
+      } else {
+        statusDiv.textContent = text.statusInitial;
+      }
+      document.getElementById('downloadChartBtn').textContent = text.downloadChartBtnText;
+      document.getElementById('downloadJsonBtn').textContent = text.downloadJsonBtnText;
+      document.getElementById('downloadCsvBtn').textContent = text.downloadCsvBtnText;
+
+      // Update chart title and axis labels if chart exists
+      if (assetChartInstance) {
+          assetChartInstance.options.plugins.title.text = text.chartTitle;
+          assetChartInstance.options.scales.x.title.text = text.chartXAxis;
+          assetChartInstance.options.scales.y.title.text = text.chartYAxis;
+          assetChartInstance.update();
+      }
+    }
+
+
     function initialize() {
       const numNodes = parseInt(document.getElementById('numNodes').value, 10);
       // determine connection mode (probability or degree)
@@ -950,7 +1177,8 @@
       removeFlows(svg);
       // clear chart if exists
       clearAssetChart();
-      statusDiv.textContent = `0 스텝 진행됨`;
+      // update status text based on language
+      updateUI(currentLanguage);
 
       // Read the initial chart update threshold value
       chartUpdateThreshold = parseInt(document.getElementById('chartUpdateThreshold').value, 10) || 100;
@@ -983,7 +1211,8 @@
         updateNodes(env, svg, positions);
         // draw flows for the latest step
         drawFlows(env, svg, positions);
-        statusDiv.textContent = `${env.stepCount} 스텝 진행됨`;
+        // update status text based on language
+        statusDiv.textContent = languageMap[currentLanguage].statusProgress(env.stepCount);
         // Update asset history chart based on the defined threshold
         if (env.stepCount <= chartUpdateThreshold || env.stepCount % 100 === 0) {
            updateAssetChart();
@@ -997,7 +1226,8 @@
       env.step();
       updateNodes(env, svg, positions);
       drawFlows(env, svg, positions);
-      statusDiv.textContent = `${env.stepCount} 스텝 진행됨`;
+      // update status text based on language
+      statusDiv.textContent = languageMap[currentLanguage].statusProgress(env.stepCount);
       // Always update asset chart after manual step
       updateAssetChart();
     });
@@ -1096,6 +1326,18 @@
       }
     });
 
+    // Language selection event listener
+    const langRadios = document.getElementsByName('lang');
+    langRadios.forEach(radio => {
+      radio.addEventListener('change', (event) => {
+        const selectedLanguage = event.target.value;
+        updateUI(selectedLanguage);
+        // Save language preference to local storage
+        localStorage.setItem('selectedLanguage', selectedLanguage);
+      });
+    });
+
+
     // Trigger population of agent counts and degree inputs at first load
     (function initDynamicInputs() {
       const event = new Event('input');
@@ -1111,8 +1353,33 @@
       }
     })();
 
-    // initialize on page load
-    initialize();
+    // Function to set the initial language on page load
+    function setInitialLanguage() {
+        const savedLanguage = localStorage.getItem('selectedLanguage');
+        if (savedLanguage) {
+            currentLanguage = savedLanguage;
+            // Check the corresponding radio button
+            const radios = document.getElementsByName('lang');
+            radios.forEach(radio => {
+                if (radio.value === savedLanguage) {
+                    radio.checked = true;
+                }
+            });
+        } else {
+            // If no saved preference, use the default (ko) and ensure the radio button is checked
+            currentLanguage = 'ko';
+            document.querySelector('input[name="lang"][value="ko"]').checked = true;
+        }
+        // Apply the text mappings for the determined initial language
+        updateUI(currentLanguage);
+    }
+
+
+    // initialize on page load:
+    // 1. Set initial language (from local storage or default)
+    // 2. Initialize environment and draw graph
+    setInitialLanguage(); // Set language first
+    initialize(); // Then initialize simulation
   </script>
 </body>
 </html>
