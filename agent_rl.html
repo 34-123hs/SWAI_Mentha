@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>RLAgent 연습 게임</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="practice.js"></script>
+</head>
+<body>
+  <nav>
+    <a href="index.html">홈</a>
+    <a href="simulation.html">시뮬레이션</a>
+    <a href="agents.html">에이전트 소개</a>
+  </nav>
+  <div class="container">
+    <h1>RLAgent 연습 게임</h1>
+    <p>RLAgent는 Q‑러닝을 활용하여 매 행동의 가치를 추정하고 최적의 선택을 학습합니다. 게임을 진행할수록 더 적절한
+    전략을 선택하게 되며, 탐험과 탐색 사이의 균형을 맞추기 위해 일정 확률로 무작위 행동을 시도합니다.</p>
+    <div id="practice-game">
+      <h2>연습 게임</h2>
+      <p id="score"></p>
+      <div id="buttons">
+        <button data-action="attack">공격</button>
+        <button data-action="defend">방어</button>
+        <button data-action="idle">대기</button>
+      </div>
+      <div id="log"></div>
+      <button id="restart-btn">다시 시작</button>
+    </div>
+  </div>
+  <script>
+    // RL 에이전트로 연습 게임을 초기화합니다.
+    initPractice('rl');
+  </script>
+</body>
+</html>

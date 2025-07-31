@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>자원 전쟁 시뮬레이션</title>
+  <!-- Chart.js library for asset history visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    #controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    #controls input {
+      width: 60px;
+    }
+    #graph {
+      display: block;
+      margin: auto;
+      border: 1px solid #ccc;
+      background-color: #fff;
+    }
+    .node {
+      cursor: pointer;
+    }
+    /* increase font-size for node labels and ensure central alignment */
+    .node text {
+      pointer-events: none;
+      font-size: 16px;
+      fill: #fff;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+    .tooltip {
+      position: absolute;
+      padding: 4px 8px;
+      background: rgba(0, 0, 0, 0.8);
+      color: #fff;
+      border-radius: 3px;
+      font-size: 12px;
+      pointer-events: none;
+      white-space: nowrap;
+      display: none;
+    }
+    #status {
+      margin-top: 10px;
+      text-align: center;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>그래프 기반 자원 전쟁 시뮬레이션</h1>
+  <div id="controls">
+    <!-- Language Selection -->
+    <div id="languageSelect" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+      <strong id="languageLabel">Language:</strong>
+      <label><input type="radio" name="lang" value="en" /> English</label>
+      <label><input type="radio" name="lang" value="ko" checked /> 한국어</label>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+      <label id="numNodesLabel">노드 수: <input type="number" id="numNodes" value="10" min="2" max="50" /></label>
+      <label id="connectionProbWrapper"><span id="connectionProbLabel">연결 확률:</span> <input type="number" id="connectionProb" value="0.3" step="0.05" min="0" max="1" /></label>
+      <label id="numStepsLabel">스텝 수: <input type="number" id="numSteps" value="30" min="1" max="1000" /></label>
+      <label id="pointRatioLabel">포인트 비율: <input type="number" id="pointRatio" value="0.1" step="0.01" min="0" max="1" /></label>
+      <label id="chartThresholdLabel"><span id="chartThresholdText">그래프 동적 갱신 임계값:</span> <input type="number" id="chartUpdateThreshold" value="100" min="1" step="1" /></label>
+      <button id="startBtn">시작</button>
+      <button id="stepBtn">한 스텝</button>
+      <button id="resetBtn">리셋</button>
+    </div>
+    <!-- Agent type counts configuration -->
+    <div id="agentConfig" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:10px;">
+      <strong id="agentConfigTitle" style="margin-right:5px;">에이전트 구성:</strong>
+      <label>RLAgent: <input type="number" id="countRL" min="0" step="1" value="2" /></label>
+      <label>GreedyBot: <input type="number" id="countGreedy" min="0" step="1" value="2" /></label>
+      <label>TurtleBot: <input type="number" id="countTurtle" min="0" step="1" value="2" /></label>
+      <label>RandomBot: <input type="number" id="countRandom" min="0" step="1" value="2" /></label>
+      <label>AdaptiveBot: <input type="number" id="countAdaptive" min="0" step="1" value="2" /></label>
+    </div>
+    <!-- Connection mode settings -->
+    <div id="connectionConfig" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:10px;">
+      <strong id="connectionConfigTitle" style="margin-right:5px;">연결 방식:</strong>
+      <label><input type="radio" name="connMode" value="probability" checked /> <span id="connProbLabel">일률 확률</span></label>
+      <label><input type="radio" name="connMode" value="degree" /> <span id="connDegreeLabel">노드별 degree</span></label>
+      <!-- Per-node degree inputs (hidden by default) -->
+      <div id="degreeInputs" style="display:none; flex-wrap:wrap; gap:5px; align-items:center;"></div>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:10px;">
+      <span id="vizModeTitle">시각화 모드:</span>
+      <label><input type="radio" name="vizMode" value="random" checked /> <span id="vizRandomLabel">무작위 샘플링</span></label>
+      <label><input type="radio" name="vizMode" value="focus" /> <span id="vizFocusLabel">특수 에이전트 집중</span></label>
+      <div id="randomControls" style="display:flex; gap:5px; align-items:center;">
+        <label id="showProbLabel">표시 확률: <input type="number" id="showProb" value="0.3" step="0.1" min="0" max="1" /></label>
+      </div>
+      <div id="focusControls" style="display:none; gap:5px; align-items:center;">
+        <label id="focusIdLabel">특수 에이전트 ID: <input type="number" id="focusId" value="0" min="0" /></label>
+      </div>
+    </div>
+    <div style="margin-top:10px;">
+      <strong id="legendTitle">전략 레전드:</strong>
+      <span style="color:#e74c3c;">■ RLAgent</span>
+      <span style="color:#27ae60;">■ Greedy</span>
+      <span style="color:#2980b9;">■ Turtle</span>
+      <span style="color:#8e44ad;">■ Random</span>
+      <span style="color:#e67e22;">■ Adaptive</span>
+    </div>
+  </div>
+  <svg id="graph" width="600" height="600"></svg>
+  <div id="status">초기화 필요</div>
+  <div class="tooltip" id="tooltip"></div>
+
+  <!-- Container for asset history chart -->
+  <canvas id="assetChart" width="600" height="300" style="margin-top:20px; display:none;"></canvas>
+  <div id="chartControls" style="display:none; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:10px;">
+    <button id="downloadChartBtn">그래프 PNG 다운로드</button>
+    <button id="downloadJsonBtn">JSON 다운로드</button>
+    <button id="downloadCsvBtn">CSV 다운로드</button>
+  </div>
+
+  <script>
+    // Define language map for UI text
+    const languageMap = {
+      en: {
+        title: "Asset War Simulation",
+        languageLabel: "Language:",
+        numNodesLabel: "Number of Nodes:",
+        connectionProbLabel: "Connection Probability:",
+        numStepsLabel: "Number of Steps:",
+        pointRatioLabel: "Point Ratio:",
+        chartThresholdText: "Chart Update Threshold:",
+        startBtnText: "Start",
+        stepBtnText: "One Step",
+        resetBtnText: "Reset",
+        agentConfigTitle: "Agent Configuration:",
+        connectionConfigTitle: "Connection Mode:",
+        connProbLabel: "Uniform Probability",
+        connDegreeLabel: "Per-node Degree",
+        vizModeTitle: "Visualization Mode:",
+        vizRandomLabel: "Random Sampling",
+        vizFocusLabel: "Focus on Special Agent",
+        showProbLabel: "Display Probability:",
+        focusIdLabel: "Special Agent ID:",
+        legendTitle: "Strategy Legend:",
+        statusInitial: "Initialization Required",
+        statusProgress: (step) => `${step} Steps Completed`,
+        chartTitle: "Asset Change of Each Node",
+        chartXAxis: "Step",
+        chartYAxis: "Asset",
+        downloadChartBtnText: "Download Chart PNG",
+        downloadJsonBtnText: "Download JSON",
+        downloadCsvBtnText: "Download CSV"
+      },
+      ko: {
+        title: "그래프 기반 자원 전쟁 시뮬레이션",
+        languageLabel: "언어:",
+        numNodesLabel: "노드 수:",
+        connectionProbLabel: "연결 확률:",
+        numStepsLabel: "스텝 수:",
+        pointRatioLabel: "포인트 비율:",
+        chartThresholdText: "그래프 동적 갱신 임계값:",
+        startBtnText: "시작",
+        stepBtnText: "한 스텝",
+        resetBtnText: "리셋",
+        agentConfigTitle: "에이전트 구성:",
+        connectionConfigTitle: "연결 방식:",
+        connProbLabel: "일률 확률",
+        connDegreeLabel: "노드별 degree",
+        vizModeTitle: "시각화 모드:",
+        vizRandomLabel: "무작위 샘플링",
+        vizFocusLabel: "특수 에이전트 집중",
+        showProbLabel: "표시 확률:",
+        focusIdLabel: "특수 에이전트 ID:",
+        legendTitle: "전략 레전드:",
+        statusInitial: "초기화 필요",
+        statusProgress: (step) => `${step} 스텝 진행됨`,
+        chartTitle: "각 노드의 자원 변화",
+        chartXAxis: "스텝",
+        chartYAxis: "자원",
+        downloadChartBtnText: "그래프 PNG 다운로드",
+        downloadJsonBtnText: "JSON 다운로드",
+        downloadCsvBtnText: "CSV 다운로드"
+      }
+    };
+
+    // Color palette for different agent types
+    const TYPE_COLORS = {
+      'RLAgent': '#e74c3c',    // red
+      'GreedyBot': '#27ae60',   // green
+      'TurtleBot': '#2980b9',   // blue
+      'RandomBot': '#8e44ad',   // purple
+      'AdaptiveBot': '#e67e22'  // orange
+    };
+
+    // Base Agent class
+    class Agent {
+      constructor(id) {
+        this.id = id;
+        this.asset = 100.0;
+        this.p = 0.0; // point will be updated each step based on asset * pointRatio
+        this.neighbors = [];
+        this.env = null;
+        this.lastSuccess = false;
+        this.lastAction = null;
+        // track how often this agent is attacked by each neighbour
+        this.attackedByCounts = {};
+      }
+      /**
+       * Decide attack/defend ratios for each neighbor.
+       * Returns an object mapping neighbour id to { attackRatio, defendRatio }.
+       * Ratios are fractions of the agent's point (0-1). The Environment will normalize if total > 1.
+       */
+      act() {
+        const actions = {};
+        const nbs = this.neighbors.slice();
+        // if no neighbours, nothing to do
+        if (nbs.length === 0) {
+          this.lastAction = actions;
+          return actions;
+        }
+        // pick a random neighbour to attack
+        const attackIndex = Math.floor(Math.random() * nbs.length);
+        const attackTarget = nbs[attackIndex];
+        // assign 50% of points to attack
+        actions[attackTarget] = { attackRatio: 0.5, defendRatio: 0.0 };
+        // pick a different neighbour to defend if possible
+        const defCandidates = nbs.filter(n => n !== attackTarget);
+        if (defCandidates.length > 0) {
+          const defenseTarget = defCandidates[Math.floor(Math.random() * defCandidates.length)];
+          // add defence allocation, combine if same id already exists
+          if (!actions[defenseTarget]) {
+            actions[defenseTarget] = { attackRatio: 0.0, defendRatio: 0.5 };
+          } else {
+            actions[defenseTarget].defendRatio += 0.5;
+          }
+        }
+        this.lastAction = actions;
+        return actions;
+      }
+      observe(success, reward) {
+        this.lastSuccess = success;
+      }
+      learn() {
+        // no-op by default
+      }
+    }
+
+    // Rule-based bots
+    class GreedyBot extends Agent {
+      act() {
+        const actions = {};
+        const nbs = this.neighbors.slice();
+        if (nbs.length === 0) {
+          this.lastAction = actions;
+          return actions;
+        }
+        // sort neighbours by their asset values descending
+        const sorted = nbs.slice().sort((a, b) => this.env.agents[b].asset - this.env.agents[a].asset);
+        const attackTarget = sorted[0];
+        if (sorted.length > 1) {
+          const defendTarget = sorted[1];
+          // attack richest with 90%
+          actions[attackTarget] = { attackRatio: 0.9, defendRatio: 0.0 };
+          // defend against second richest with 10%
+          actions[defendTarget] = { attackRatio: 0.0, defendRatio: 0.1 };
+        } else {
+          // only one neighbour: use all points to attack
+          actions[attackTarget] = { attackRatio: 1.0, defendRatio: 0.0 };
+        }
+        this.lastAction = actions;
+        return actions;
+      }
+    }
+    class TurtleBot extends Agent {
+      act() {
+        const actions = {};
+        const nbs = this.neighbors.slice();
+        if (nbs.length === 0) {
+          this.lastAction = actions;
+          return actions;
+        }
+        // sort neighbours by asset descending to find richest and second richest
+        const sorted = nbs.slice().sort((a, b) => this.env.agents[b].asset - this.env.agents[a].asset);
+        const richest = sorted[0];
+        // attack richest with 10%
+        actions[richest] = { attackRatio: 0.1, defendRatio: 0.0 };
+        if (sorted.length > 1) {
+          const second = sorted[1];
+          // defend 60% against richest neighbour
+          if (!actions[richest]) {
+            actions[richest] = { attackRatio: 0.0, defendRatio: 0.6 };
+          } else {
+            actions[richest].defendRatio = (actions[richest].defendRatio || 0) + 0.6;
+          }
+          // defend 30% against second richest neighbour
+          if (!actions[second]) {
+            actions[second] = { attackRatio: 0.0, defendRatio: 0.3 };
+          } else {
+            actions[second].defendRatio = (actions[second].defendRatio || 0) + 0.3;
+          }
+        } else {
+          // only one neighbour: use all remaining 90% to defend same neighbour
+          actions[richest].defendRatio = (actions[richest].defendRatio || 0) + 0.9;
+        }
+        this.lastAction = actions;
+        return actions;
+      }
+    }
+    class RandomBot extends Agent {
+      act() {
+        const actions = {};
+        const nbs = this.neighbors.slice();
+        if (nbs.length === 0) {
+          this.lastAction = actions;
+          return actions;
+        }
+        // choose a random neighbour to attack
+        const attackTarget = nbs[Math.floor(Math.random() * nbs.length)];
+        // random attack ratio between 0 and 1
+        const attackRatio = Math.random();
+        actions[attackTarget] = { attackRatio: attackRatio, defendRatio: 0.0 };
+        // distribute the remaining points to defence of random neighbours (not the attack target)
+        const leftover = 1.0 - attackRatio;
+        const defCandidates = nbs.filter(n => n !== attackTarget);
+        if (leftover > 0 && defCandidates.length > 0) {
+          // randomly decide number of defence targets (at least one)
+          const numDef = Math.floor(Math.random() * defCandidates.length) + 1;
+          // shuffle candidates and pick the first numDef
+          const shuffled = defCandidates.slice().sort(() => Math.random() - 0.5);
+          const selected = shuffled.slice(0, numDef);
+          // generate random weights
+          const weights = [];
+          for (let i = 0; i < selected.length; i++) {
+            weights.push(Math.random());
+          }
+          const sumw = weights.reduce((a, b) => a + b, 0);
+          for (let i = 0; i < selected.length; i++) {
+            const nb = selected[i];
+            const portion = (weights[i] / sumw) * leftover;
+            actions[nb] = { attackRatio: 0.0, defendRatio: portion };
+          }
+        }
+        this.lastAction = actions;
+        return actions;
+      }
+    }
+    class AdaptiveBot extends Agent {
+      constructor(id) {
+        super(id);
+        // initial attack ratio between 0.1 and 0.9
+        this.alpha = 0.5;
+      }
+      act() {
+        const actions = {};
+        const nbs = this.neighbors.slice();
+        if (nbs.length === 0) {
+          this.lastAction = actions;
+          return actions;
+        }
+        // determine richest neighbour as attack target
+        let maxAsset = -Infinity;
+        let richest = nbs[0];
+        for (const j of nbs) {
+          const asset = this.env.agents[j].asset;
+          if (asset > maxAsset) {
+            maxAsset = asset;
+            richest = j;
+          }
+        }
+        // clamp alpha to [0.1, 0.9]
+        const a = Math.max(0.1, Math.min(0.9, this.alpha));
+        actions[richest] = { attackRatio: a, defendRatio: 0.0 };
+        // allocate the remaining proportion to defence against the most frequent attacker
+        const leftover = 1.0 - a;
+        if (leftover > 0) {
+          // find neighbour who attacked this agent most frequently
+          let defenceTarget = null;
+          let maxCount = -1;
+          for (const j of nbs) {
+            const count = (this.attackedByCounts && this.attackedByCounts[j]) ? this.attackedByCounts[j] : 0;
+            if (count > maxCount) {
+              maxCount = count;
+              defenceTarget = j;
+            }
+          }
+          // if no one has attacked yet, default to richest
+          if (defenceTarget === null) defenceTarget = richest;
+          if (!actions[defenceTarget]) {
+            actions[defenceTarget] = { attackRatio: 0.0, defendRatio: leftover };
+          } else {
+            actions[defenceTarget].defendRatio = (actions[defenceTarget].defendRatio || 0) + leftover;
+          }
+        }
+        this.lastAction = actions;
+        return actions;
+      }
+      observe(success, reward) {
+        super.observe(success, reward);
+        if (this.lastAction === null) return;
+        // adjust alpha by 0.1 based on success of last step
+        if (success) {
+          this.alpha = Math.min(0.9, this.alpha + 0.1);
+        } else {
+          this.alpha = Math.max(0.1, this.alpha - 0.1);
+        }
+      }
+    }
+    // Simple Q-learning RL agent
+    class RLAgent extends Agent {
+      constructor(id) {
+        super(id);
+        // qValues: map from action key ('A_j','D_j','N') to Q-value
+        this.qValues = {};
+        this.lr = 0.2;
+        this.epsilon = 0.1;
+        this.lastChosenAction = null;
+      }
+      act() {
+        const actions = {};
+        const nbs = this.neighbors.slice();
+        // ensure q-values for attack and defence on each neighbour and the no-op action
+        for (const n of nbs) {
+          const aKey = `A_${n}`;
+          const dKey = `D_${n}`;
+          if (!(aKey in this.qValues)) this.qValues[aKey] = 0.0;
+          if (!(dKey in this.qValues)) this.qValues[dKey] = 0.0;
+        }
+        if (!('N' in this.qValues)) this.qValues['N'] = 0.0;
+        // epsilon-greedy selection over all available action keys
+        let actionKey;
+        const keys = Object.keys(this.qValues);
+        if (Math.random() < this.epsilon) {
+          // explore: pick random key
+          actionKey = keys[Math.floor(Math.random() * keys.length)];
+        } else {
+          // exploit: pick key with maximum Q-value
+          let maxQ = -Infinity;
+          let cands = [];
+          for (const k of keys) {
+            const q = this.qValues[k];
+            if (q > maxQ) {
+              maxQ = q;
+              cands = [k];
+            } else if (q === maxQ) {
+              cands.push(k);
+            }
+          }
+          actionKey = cands[Math.floor(Math.random() * cands.length)];
+        }
+        // map the chosen key into an action mapping
+        if (actionKey === 'N') {
+          // no action: both attack and defend ratios are zero
+        } else if (actionKey.startsWith('A_')) {
+          const idStr = actionKey.split('_')[1];
+          const j = parseInt(idStr);
+          actions[j] = { attackRatio: 1.0, defendRatio: 0.0 };
+        } else if (actionKey.startsWith('D_')) {
+          const idStr = actionKey.split('_')[1];
+          const j = parseInt(idStr);
+          actions[j] = { attackRatio: 0.0, defendRatio: 1.0 };
+        }
+        this.lastChosenAction = actionKey;
+        this.lastAction = actions;
+        return actions;
+      }
+      observe(success, reward) {
+        super.observe(success, reward);
+        if (!this.lastChosenAction) return;
+        const key = this.lastChosenAction;
+        if (!(key in this.qValues)) this.qValues[key] = 0.0;
+        const oldQ = this.qValues[key];
+        const r = reward;
+        this.qValues[key] = oldQ + this.lr * (r - oldQ);
+      }
+    }
+
+    // Environment encapsulating agents and interactions
+    class Environment {
+      /**
+       * Construct a new environment.
+       * @param {number} numNodes Number of agents/nodes.
+       * @param {string} connectionMode Either 'probability' or 'degree'.
+       * @param {any} connectionData When mode is 'probability', this is a single number (0-1). When mode is 'degree', this is an array of desired degrees for each node.
+       * @param {Array} agentTypes List of agent constructor functions.
+       * @param {Array} distribution Fractional distribution of agent types, or computed from counts.
+       * @param {number} delta Fraction of effective damage that is transferred.
+       */
+      constructor(numNodes, connectionMode, connectionData, agentTypes, distribution, pointRatio, delta = 0.2) {
+        this.numNodes = numNodes;
+        this.connectionMode = connectionMode;
+        this.connectionData = connectionData;
+        this.delta = delta;
+        this.pointRatio = pointRatio;
+        this.stepCount = 0;
+        // create adjacency list
+        this.graph = {};
+        for (let i = 0; i < numNodes; i++) {
+          this.graph[i] = [];
+        }
+        // generate edges based on connectionMode
+        if (connectionMode === 'probability') {
+          const prob = parseFloat(connectionData);
+          for (let i = 0; i < numNodes; i++) {
+            for (let j = i + 1; j < numNodes; j++) {
+              if (Math.random() < prob) {
+                this.graph[i].push(j);
+                this.graph[j].push(i);
+              }
+            }
+          }
+        } else if (connectionMode === 'degree') {
+          // connectionData is an array of desired degrees per node.
+          const degrees = connectionData;
+          const maxDeg = Math.max(1, numNodes - 1);
+          for (let i = 0; i < numNodes; i++) {
+            for (let j = i + 1; j < numNodes; j++) {
+              // approximate probability based on desired degrees: average of normalized degrees
+              const di = Math.max(0, Math.min(maxDeg, degrees[i] || 0));
+              const dj = Math.max(0, Math.min(maxDeg, degrees[j] || 0));
+              const p = ((di / maxDeg) + (dj / maxDeg)) / 2;
+              if (Math.random() < p) {
+                this.graph[i].push(j);
+                this.graph[j].push(i);
+              }
+            }
+          }
+        }
+        // determine counts of each agent type according to distribution
+        const counts = distribution.map(frac => Math.round(frac * numNodes));
+        // adjust counts to sum exactly to numNodes
+        while (counts.reduce((a, b) => a + b, 0) < numNodes) {
+          const idx = counts.indexOf(Math.max(...counts));
+          counts[idx]++;
+        }
+        while (counts.reduce((a, b) => a + b, 0) > numNodes) {
+          const idx = counts.indexOf(Math.max(...counts));
+          counts[idx]--;
+        }
+        // create list of agent constructors
+        let classesList = [];
+        for (let i = 0; i < agentTypes.length; i++) {
+          for (let k = 0; k < counts[i]; k++) {
+            classesList.push(agentTypes[i]);
+          }
+        }
+        // random shuffle
+        for (let i = classesList.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [classesList[i], classesList[j]] = [classesList[j], classesList[i]];
+        }
+        // instantiate agents
+        this.agents = {};
+        for (let i = 0; i < numNodes; i++) {
+          const AgentClass = classesList[i % classesList.length];
+          const agent = new AgentClass(i);
+          agent.env = this;
+          this.agents[i] = agent;
+        }
+        // set neighbours
+        for (let i = 0; i < numNodes; i++) {
+          this.agents[i].neighbors = this.graph[i].slice();
+        }
+        // record asset history: array of snapshots, each snapshot is array of asset values per agent
+        this.assetHistory = [];
+        this.recordAssets();
+        // placeholder for last step flows
+        this.lastFlows = [];
+      }
+      /** Record current assets of all agents */
+      recordAssets() {
+        const snapshot = [];
+        for (let i = 0; i < this.numNodes; i++) {
+          snapshot.push(this.agents[i].asset);
+        }
+        this.assetHistory.push(snapshot);
+      }
+      step() {
+        this.stepCount++;
+        // update points based on current assets and point ratio
+        for (const id in this.agents) {
+          const agent = this.agents[id];
+          agent.p = agent.asset * this.pointRatio;
+        }
+        const actions = {};
+        // collect actions from each agent (per-neighbour ratios)
+        for (const id in this.agents) {
+          const agent = this.agents[id];
+          let actObj = agent.act();
+          // ensure mapping only includes valid neighbours
+          const filtered = {};
+          for (const nId in actObj) {
+            const n = parseInt(nId);
+            if (agent.neighbors.includes(n)) {
+              const entry = actObj[nId];
+              filtered[n] = {
+                attackRatio: Math.max(0, Math.min(1, entry.attackRatio || 0)),
+                defendRatio: Math.max(0, Math.min(1, entry.defendRatio || 0))
+              };
+            }
+          }
+          actions[id] = filtered;
+        }
+        // normalize total ratios per agent so sum <= 1
+        for (const id in actions) {
+          const acts = actions[id];
+          let total = 0;
+          for (const n in acts) {
+            total += acts[n].attackRatio + acts[n].defendRatio;
+          }
+          if (total > 1) {
+            const scale = 1 / total;
+            for (const n in acts) {
+              acts[n].attackRatio *= scale;
+              acts[n].defendRatio *= scale;
+            }
+          }
+        }
+        // compute attack and defense power per directed pair
+        const attackPower = {};
+        const defendPower = {};
+        for (const id in this.agents) {
+          attackPower[id] = {};
+          defendPower[id] = {};
+        }
+        for (const id in actions) {
+          const acts = actions[id];
+          const p_i = this.agents[id].p;
+          for (const n in acts) {
+            const target = parseInt(n);
+            const ar = acts[n].attackRatio;
+            const dr = acts[n].defendRatio;
+            attackPower[id][target] = ar * p_i;
+            defendPower[id][target] = dr * p_i;
+          }
+        }
+        // compute damages per pair i -> j
+        const damages = {};
+        for (const i in this.agents) {
+          for (const j of this.agents[i].neighbors) {
+            const ap = attackPower[i] && attackPower[i][j] ? attackPower[i][j] : 0;
+            // defence by j against i uses defendPower[j][i]
+            const dp = defendPower[j] && defendPower[j][i] ? defendPower[j][i] : 0;
+            const d = Math.max(ap - dp, 0);
+            if (d > 0) {
+              damages[`${i}_${j}`] = d;
+            }
+          }
+        }
+        // asset 변화 누적
+          const assetChanges = {};
+          for (const id in this.agents) {
+            assetChanges[id] = 0.0;
+          }
+          for (const key in damages) {
+              const [i, j] = key.split('_');
+              const victim_asset = this.agents[j].asset;
+              const percent = this.delta * damages[key]; // 예: damages[key]=0.2, delta=1이면 20%
+              const transfer = victim_asset * percent;
+              assetChanges[i] += transfer;
+              assetChanges[j] -= transfer;
+            }
+
+          // flows 시각화 정보 (assetChanges 건드리지 않음)
+          const flows = [];
+          for (const key in damages) {
+            const parts = key.split('_');
+            const i = parseInt(parts[0]);
+            const j = parseInt(parts[1]);
+            const victim_asset = this.agents[j].asset;
+            const wanted = this.delta * damages[key];
+            const transfer = Math.min(wanted, victim_asset); // 시각화와 실제 동일하게 맞추기
+            flows.push({ i, j, transfer });
+          }
+
+        // record attacks for adaptive bots: each victim notes which attacker hit them
+        for (const flow of flows) {
+          const attackerId = flow.i;
+          const victimId = flow.j;
+          const victimAgent = this.agents[victimId];
+          if (victimAgent && typeof victimAgent.recordAttack === 'function') {
+            victimAgent.recordAttack(attackerId);
+          }
+        }
+
+        // update assets
+        for (const id in this.agents) {
+          const agent = this.agents[id];
+          const change = assetChanges[id];
+          agent.asset = Math.max(0, agent.asset + change);
+        }
+        // provide feedback (reward and success)
+        for (const id in this.agents) {
+          // success if net asset change positive
+          const success = assetChanges[id] > 0;
+          const reward = assetChanges[id];
+          this.agents[id].observe(success, reward);
+        }
+        // call learn hooks
+        for (const id in this.agents) {
+          this.agents[id].learn();
+        }
+        // store flows for UI
+        this.lastFlows = flows;
+        // record current assets after this step
+        this.recordAssets();
+      }
+      reset() {
+        // reset assets and internal state
+        this.stepCount = 0;
+        for (const id in this.agents) {
+          const agent = this.agents[id];
+          agent.asset = 100.0;
+          agent.lastSuccess = false;
+          agent.lastAction = null;
+          if (agent instanceof AdaptiveBot) {
+            agent.alpha = 0.5;
+          }
+          if (agent instanceof RLAgent) {
+            agent.qValues = {};
+            agent.lastChosenAction = null;
+          }
+          // clear attack history counts
+          if (agent.attackedByCounts) {
+            agent.attackedByCounts = {};
+          }
+        }
+        // reset asset history and record initial state
+        this.assetHistory = [];
+        this.recordAssets();
+      }
+    }
+
+    // Graph drawing utilities
+    function drawGraph(env, svg) {
+      // compute positions on a circle
+      const numNodes = env.numNodes;
+      const centerX = svg.clientWidth / 2;
+      const centerY = svg.clientHeight / 2;
+      const radius = Math.min(centerX, centerY) - 40;
+      const positions = {};
+      for (let i = 0; i < numNodes; i++) {
+        const angle = (2 * Math.PI * i) / numNodes;
+        const x = centerX + radius * Math.cos(angle);
+        const y = centerY + radius * Math.sin(angle);
+        positions[i] = { x, y };
+      }
+      // clear previous contents
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+      // draw edges
+      for (let i = 0; i < numNodes; i++) {
+        for (const j of env.graph[i]) {
+          if (i < j) {
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', positions[i].x);
+            line.setAttribute('y1', positions[i].y);
+            line.setAttribute('x2', positions[j].x);
+            line.setAttribute('y2', positions[j].y);
+            line.setAttribute('stroke', '#bbb');
+            line.setAttribute('stroke-width', '1');
+            svg.appendChild(line);
+          }
+        }
+      }
+      // draw nodes
+      for (let i = 0; i < numNodes; i++) {
+        const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        group.setAttribute('class', 'node');
+        const agent = env.agents[i];
+        const color = TYPE_COLORS[agent.constructor.name] || '#34495e';
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', positions[i].x);
+        circle.setAttribute('cy', positions[i].y);
+        circle.setAttribute('r', 20);
+        circle.setAttribute('fill', color);
+        circle.setAttribute('stroke', '#333');
+        group.appendChild(circle);
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', positions[i].x);
+        text.setAttribute('y', positions[i].y);
+        text.setAttribute('class', 'node-label');
+        // Use tspans for id and asset (two lines) with central alignment
+        const tspanId = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+        tspanId.setAttribute('x', positions[i].x);
+        tspanId.setAttribute('dy', '-0.3em');
+        tspanId.textContent = `${i}`;
+        const tspanAsset = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+        tspanAsset.setAttribute('x', positions[i].x);
+        tspanAsset.setAttribute('dy', '1.0em');
+        tspanAsset.textContent = `${agent.asset.toFixed(0)}`;
+        text.appendChild(tspanId);
+        text.appendChild(tspanAsset);
+        group.appendChild(text);
+        // store group for updates
+        svg.appendChild(group);
+      }
+      return positions;
+    }
+    function updateNodes(env, svg, positions) {
+      const nodes = svg.querySelectorAll('.node');
+      let idx = 0;
+      nodes.forEach(node => {
+        const agent = env.agents[idx];
+        const colorBase = TYPE_COLORS[agent.constructor.name] || '#34495e';
+        // adjust brightness based on asset: map asset 0-200 to 0.5-1 brightness
+        const maxAsset = 200;
+        const minFactor = 0.5;
+        const factor = minFactor + Math.min(agent.asset / maxAsset, 1.0) * (1 - minFactor);
+        // convert hex to rgb
+        const rgb = hexToRgb(colorBase);
+        const adjusted = {
+          r: Math.floor(rgb.r * factor),
+          g: Math.floor(rgb.g * factor),
+          b: Math.floor(rgb.b * factor)
+        };
+        const fillColor = `rgb(${adjusted.r}, ${adjusted.g}, ${adjusted.b})`;
+        const circle = node.querySelector('circle');
+        circle.setAttribute('fill', fillColor);
+        const text = node.querySelector('text');
+        if (text) {
+          const tspans = text.querySelectorAll('tspan');
+          if (tspans.length >= 2) {
+            tspans[0].textContent = `${idx}`;
+            tspans[1].textContent = `${agent.asset.toFixed(0)}`;
+          } else {
+            // fallback to single-line update
+            text.textContent = `${idx}\n${agent.asset.toFixed(0)}`;
+          }
+        }
+        idx++;
+      });
+    }
+    function hexToRgb(hex) {
+      const match = hex.replace('#', '');
+      const bigint = parseInt(match, 16);
+      return {
+        r: (bigint >> 16) & 255,
+        g: (bigint >> 8) & 255,
+        b: bigint & 255
+      };
+    }
+
+    // Remove existing flow lines and labels from the SVG
+    function removeFlows(svg) {
+      const existing = svg.querySelectorAll('.flow');
+      existing.forEach(el => el.remove());
+    }
+
+    // Ensure that the SVG contains an arrowhead definition for flow arrows
+    function ensureArrowhead(svg) {
+      let defs = svg.querySelector('defs');
+      if (!defs) {
+        defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        svg.appendChild(defs);
+      }
+      let marker = svg.querySelector('#arrowhead');
+      if (!marker) {
+        marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+        marker.setAttribute('id', 'arrowhead');
+        marker.setAttribute('markerWidth', '6');
+        marker.setAttribute('markerHeight', '6');
+        marker.setAttribute('refX', '5');
+        marker.setAttribute('refY', '3');
+        marker.setAttribute('orient', 'auto');
+        marker.setAttribute('markerUnits', 'strokeWidth');
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', 'M 0 0 L 6 3 L 0 6 z');
+        path.setAttribute('fill', '#e74c3c');
+        marker.appendChild(path);
+        defs.appendChild(marker);
+      }
+    }
+
+    // Draw asset flows after each step based on the lastFlows recorded in the environment
+    function drawFlows(env, svg, positions) {
+      if (!env || !env.lastFlows) return;
+      // clear previous flows
+      removeFlows(svg);
+      ensureArrowhead(svg);
+      const flows = env.lastFlows;
+      for (const flow of flows) {
+        const { i, j, transfer } = flow;
+        // decide if this flow should be drawn based on visualization mode
+        let draw = false;
+        if (vizMode === 'random') {
+          if (Math.random() < showProb) draw = true;
+        } else if (vizMode === 'focus') {
+          if (i === focusId || j === focusId) draw = true;
+        }
+        if (!draw) continue;
+        const start = positions[i];
+        const end = positions[j];
+        // compute direction vector and adjust start/end to avoid overlapping nodes
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist === 0) continue;
+        const offset = 22;
+        const sx = start.x + (dx / dist) * offset;
+        const sy = start.y + (dy / dist) * offset;
+        const ex = end.x - (dx / dist) * offset;
+        const ey = end.y - (dy / dist) * offset;
+        const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        group.setAttribute('class', 'flow');
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', sx);
+        line.setAttribute('y1', sy);
+        line.setAttribute('x2', ex);
+        line.setAttribute('y2', ey);
+        line.setAttribute('stroke', '#e74c3c');
+        line.setAttribute('stroke-width', '2');
+        line.setAttribute('marker-end', 'url(#arrowhead)');
+        group.appendChild(line);
+        // label at midpoint
+        const mx = (sx + ex) / 2;
+        const my = (sy + ey) / 2;
+        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        label.setAttribute('x', mx);
+        label.setAttribute('y', my - 5);
+        label.setAttribute('fill', '#e74c3c');
+        label.setAttribute('font-size', '10');
+        label.setAttribute('text-anchor', 'middle');
+        label.setAttribute('dominant-baseline', 'central');
+        label.textContent = transfer.toFixed(2);
+        group.appendChild(label);
+        svg.appendChild(group);
+      }
+    }
+
+    // global variables
+    let env = null;
+    let positions = null;
+    let intervalId = null;
+    // visualization settings
+    let vizMode = 'random';
+    let showProb = 0.3;
+    let focusId = 0;
+    // Chart update threshold
+    let chartUpdateThreshold = 100;
+
+
+    // Chart.js instance for asset history
+    let assetChartInstance = null;
+
+    // Helper to clear existing asset chart
+    function clearAssetChart() {
+      const canvas = document.getElementById('assetChart');
+      const controls = document.getElementById('chartControls');
+      if (assetChartInstance) {
+        assetChartInstance.destroy();
+        assetChartInstance = null;
+      }
+      canvas.style.display = 'none';
+      controls.style.display = 'none';
+    }
+
+    // Helper to draw/update asset chart based on env.assetHistory
+    function updateAssetChart() {
+      if (!env || !env.assetHistory || env.assetHistory.length === 0) return;
+      const canvas = document.getElementById('assetChart');
+      const controls = document.getElementById('chartControls');
+      canvas.style.display = 'block';
+      controls.style.display = 'flex';
+      const ctx = canvas.getContext('2d');
+      // prepare data
+      const labels = [];
+      for (let i = 0; i < env.assetHistory.length; i++) {
+        labels.push(i.toString());
+      }
+      const datasets = [];
+      const numNodes = env.numNodes;
+      for (let i = 0; i < numNodes; i++) {
+        const data = env.assetHistory.map(snapshot => snapshot[i]);
+        // choose color based on agent type but lighten for chart clarity
+        const agent = env.agents[i];
+        const baseColor = TYPE_COLORS[agent.constructor.name] || '#34495e';
+        const rgb = hexToRgb(baseColor);
+        const colorStr = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.6)`;
+        datasets.push({
+          label: `N${i}`,
+          data: data,
+          fill: false,
+          borderColor: colorStr,
+          backgroundColor: colorStr,
+          tension: 0.1,
+        });
+      }
+      // destroy existing chart if present
+      if (assetChartInstance) {
+        assetChartInstance.destroy();
+      }
+      assetChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: datasets
+        },
+        options: {
+          responsive: false,
+          maintainAspectRatio: false,
+          plugins: {
+            title: {
+              display: true,
+              text: languageMap[currentLanguage].chartTitle // Use localized text
+            },
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: languageMap[currentLanguage].chartXAxis // Use localized text
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: languageMap[currentLanguage].chartYAxis // Use localized text
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Download chart as PNG
+    function downloadChart() {
+      if (!assetChartInstance) return;
+      const link = document.createElement('a');
+      link.href = assetChartInstance.toBase64Image();
+      link.download = 'asset_history.png';
+      link.click();
+    }
+
+    // Download data as JSON
+    function downloadJson() {
+      if (!env || !env.assetHistory) return;
+      const dataObj = {
+        assetHistory: env.assetHistory
+      };
+      const blob = new Blob([JSON.stringify(dataObj, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'asset_history.json';
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Download data as CSV
+    function downloadCsv() {
+      if (!env || !env.assetHistory) return;
+      // CSV header: step,N0,N1,...
+      let csv = '';
+      const numNodes = env.numNodes;
+      const header = ['step'];
+      for (let i = 0; i < numNodes; i++) header.push(`N${i}`);
+      csv += header.join(',') + '\n';
+      for (let step = 0; step < env.assetHistory.length; step++) {
+        const row = [step.toString()].concat(env.assetHistory[step].map(v => v.toFixed(2)));
+        csv += row.join(',') + '\n';
+      }
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'asset_history.csv';
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    const svg = document.getElementById('graph');
+    const statusDiv = document.getElementById('status');
+    const tooltip = document.getElementById('tooltip');
+
+    let currentLanguage = 'ko'; // default language
+
+    function updateUI(lang) {
+      currentLanguage = lang;
+      const text = languageMap[lang];
+      document.title = text.title;
+      document.querySelector('h1').textContent = text.title;
+      document.getElementById('languageLabel').textContent = text.languageLabel;
+      document.getElementById('numNodesLabel').childNodes[0].textContent = text.numNodesLabel + ' ';
+      document.getElementById('connectionProbLabel').textContent = text.connectionProbLabel + ' ';
+      document.getElementById('numStepsLabel').childNodes[0].textContent = text.numStepsLabel + ' ';
+      document.getElementById('pointRatioLabel').childNodes[0].textContent = text.pointRatioLabel + ' ';
+      document.getElementById('chartThresholdText').textContent = text.chartThresholdText + ' ';
+      document.getElementById('startBtn').textContent = text.startBtnText;
+      document.getElementById('stepBtn').textContent = text.stepBtnText;
+      document.getElementById('resetBtn').textContent = text.resetBtnText;
+      document.getElementById('agentConfigTitle').textContent = text.agentConfigTitle;
+      document.getElementById('connectionConfigTitle').textContent = text.connectionConfigTitle;
+      document.getElementById('connProbLabel').textContent = text.connProbLabel;
+      document.getElementById('connDegreeLabel').textContent = text.connDegreeLabel;
+      document.getElementById('vizModeTitle').textContent = text.vizModeTitle;
+      document.getElementById('vizRandomLabel').textContent = text.vizRandomLabel;
+      document.getElementById('vizFocusLabel').textContent = text.vizFocusLabel;
+      document.getElementById('showProbLabel').childNodes[0].textContent = text.showProbLabel + ' ';
+      document.getElementById('focusIdLabel').childNodes[0].textContent = text.focusIdLabel + ' ';
+      document.getElementById('legendTitle').textContent = text.legendTitle;
+      // Update status text based on current step
+      if (env && env.stepCount > 0) {
+        statusDiv.textContent = text.statusProgress(env.stepCount);
+      } else {
+        statusDiv.textContent = text.statusInitial;
+      }
+      document.getElementById('downloadChartBtn').textContent = text.downloadChartBtnText;
+      document.getElementById('downloadJsonBtn').textContent = text.downloadJsonBtnText;
+      document.getElementById('downloadCsvBtn').textContent = text.downloadCsvBtnText;
+
+      // Update chart title and axis labels if chart exists
+      if (assetChartInstance) {
+          assetChartInstance.options.plugins.title.text = text.chartTitle;
+          assetChartInstance.options.scales.x.title.text = text.chartXAxis;
+          assetChartInstance.options.scales.y.title.text = text.chartYAxis;
+          assetChartInstance.update();
+      }
+    }
+
+
+    function initialize() {
+      const numNodes = parseInt(document.getElementById('numNodes').value, 10);
+      // determine connection mode (probability or degree)
+      const connRadios = document.getElementsByName('connMode');
+      let connMode = 'probability';
+      connRadios.forEach(r => { if (r.checked) connMode = r.value; });
+      let connectionData;
+      if (connMode === 'probability') {
+        connectionData = parseFloat(document.getElementById('connectionProb').value);
+      } else {
+        // gather per-node degrees
+        connectionData = [];
+        const inputs = document.querySelectorAll('#degreeInputs input');
+        inputs.forEach((inp, idx) => {
+          const val = parseInt(inp.value, 10);
+          connectionData[idx] = isNaN(val) ? 0 : val;
+        });
+      }
+      // steps is read by controls; not used here
+      // gather agent counts
+      const cRL = parseInt(document.getElementById('countRL').value, 10) || 0;
+      const cGreedy = parseInt(document.getElementById('countGreedy').value, 10) || 0;
+      const cTurtle = parseInt(document.getElementById('countTurtle').value, 10) || 0;
+      const cRandom = parseInt(document.getElementById('countRandom').value, 10) || 0;
+      const cAdaptive = parseInt(document.getElementById('countAdaptive').value, 10) || 0;
+      const totalSpecified = cRL + cGreedy + cTurtle + cRandom + cAdaptive;
+      let distribution;
+      if (totalSpecified > 0) {
+        // normalize counts to sum to 1 so proportions are maintained regardless of numNodes
+        distribution = [cRL, cGreedy, cTurtle, cRandom, cAdaptive].map(c => c / totalSpecified);
+      } else {
+        // default equal distribution
+        distribution = [0.2, 0.2, 0.2, 0.2, 0.2];
+      }
+      const agentTypes = [RLAgent, GreedyBot, TurtleBot, RandomBot, AdaptiveBot];
+      const pointRatio = parseFloat(document.getElementById('pointRatio').value) || 0.1;
+      env = new Environment(numNodes, connMode, connectionData, agentTypes, distribution, pointRatio, 0.2);
+      positions = drawGraph(env, svg);
+      updateNodes(env, svg, positions);
+      // clear any previous flows
+      removeFlows(svg);
+      // clear chart if exists
+      clearAssetChart();
+      // update status text based on language
+      updateUI(currentLanguage);
+
+      // Read the initial chart update threshold value
+      chartUpdateThreshold = parseInt(document.getElementById('chartUpdateThreshold').value, 10) || 100;
+    }
+
+    document.getElementById('startBtn').addEventListener('click', () => {
+      if (!env) initialize();
+      const steps = parseInt(document.getElementById('numSteps').value, 10);
+      let currentStep = 0;
+      // disable controls while running
+      document.getElementById('startBtn').disabled = true;
+      document.getElementById('stepBtn').disabled = true;
+      document.getElementById('resetBtn').disabled = true;
+
+      // Read the chart update threshold value before starting
+      chartUpdateThreshold = parseInt(document.getElementById('chartUpdateThreshold').value, 10) || 100;
+
+
+      intervalId = setInterval(() => {
+        if (currentStep >= steps) {
+          clearInterval(intervalId);
+          document.getElementById('startBtn').disabled = false;
+          document.getElementById('stepBtn').disabled = false;
+          document.getElementById('resetBtn').disabled = false;
+          // ensure final chart is up to date when simulation ends
+          updateAssetChart();
+          return;
+        }
+        env.step();
+        updateNodes(env, svg, positions);
+        // draw flows for the latest step
+        drawFlows(env, svg, positions);
+        // update status text based on language
+        statusDiv.textContent = languageMap[currentLanguage].statusProgress(env.stepCount);
+        // Update asset history chart based on the defined threshold
+        if (env.stepCount <= chartUpdateThreshold || env.stepCount % 100 === 0) {
+           updateAssetChart();
+        }
+        currentStep++;
+      }, 10);
+    });
+
+    document.getElementById('stepBtn').addEventListener('click', () => {
+      if (!env) initialize();
+      env.step();
+      updateNodes(env, svg, positions);
+      drawFlows(env, svg, positions);
+      // update status text based on language
+      statusDiv.textContent = languageMap[currentLanguage].statusProgress(env.stepCount);
+      // Always update asset chart after manual step
+      updateAssetChart();
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+      initialize();
+      // remove any existing flow visuals
+      removeFlows(svg);
+      // clear chart on reset
+      clearAssetChart();
+      document.getElementById('startBtn').disabled = false;
+      document.getElementById('stepBtn').disabled = false;
+      document.getElementById('resetBtn').disabled = false;
+    });
+
+    // Chart and data download button listeners
+    document.getElementById('downloadChartBtn').addEventListener('click', () => {
+      downloadChart();
+    });
+    document.getElementById('downloadJsonBtn').addEventListener('click', () => {
+      downloadJson();
+    });
+    document.getElementById('downloadCsvBtn').addEventListener('click', () => {
+      downloadCsv();
+    });
+
+    // Visualization mode controls
+    const vizRadios = document.getElementsByName('vizMode');
+    vizRadios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        vizMode = radio.value;
+        document.getElementById('randomControls').style.display = vizMode === 'random' ? 'flex' : 'none';
+        document.getElementById('focusControls').style.display = vizMode === 'focus' ? 'flex' : 'none';
+      });
+    });
+    document.getElementById('showProb').addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value);
+      showProb = Math.max(0, Math.min(1, val));
+    });
+    document.getElementById('focusId').addEventListener('input', (e) => {
+      focusId = parseInt(e.target.value, 10);
+    });
+
+    // Connection mode toggling: show/hide probability vs degree inputs
+    const connRadios = document.getElementsByName('connMode');
+    connRadios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        const mode = radio.value;
+        if (radio.checked) {
+          if (mode === 'probability') {
+            document.getElementById('connectionProbWrapper').style.display = 'inline-block';
+            document.getElementById('degreeInputs').style.display = 'none';
+          } else {
+            document.getElementById('connectionProbWrapper').style.display = 'none';
+            document.getElementById('degreeInputs').style.display = 'flex';
+          }
+        }
+      });
+    });
+
+    // Update agent count defaults and degree inputs when number of nodes changes
+    document.getElementById('numNodes').addEventListener('input', () => {
+      const num = parseInt(document.getElementById('numNodes').value, 10);
+      if (isNaN(num) || num < 2) return;
+      // recompute default agent counts: distribute evenly
+      const base = Math.floor(num / 5);
+      const remainder = num % 5;
+      const counts = [base, base, base, base, base];
+      for (let i = 0; i < remainder; i++) counts[i]++;
+      document.getElementById('countRL').value = counts[0];
+      document.getElementById('countGreedy').value = counts[1];
+      document.getElementById('countTurtle').value = counts[2];
+      document.getElementById('countRandom').value = counts[3];
+      document.getElementById('countAdaptive').value = counts[4];
+      // recreate degree inputs according to new num
+      const degreeDiv = document.getElementById('degreeInputs');
+      degreeDiv.innerHTML = '';
+      for (let i = 0; i < num; i++) {
+        const inp = document.createElement('input');
+        inp.type = 'number';
+        inp.min = '0';
+        inp.max = (num - 1).toString();
+        // default degree based on connection probability and number of nodes: (num-1) * connectionProb
+        const prob = parseFloat(document.getElementById('connectionProb').value || '0');
+        const defaultDeg = Math.round((num - 1) * prob);
+        inp.value = Math.min(num - 1, Math.max(0, defaultDeg));
+        inp.style.width = '50px';
+        const label = document.createElement('label');
+        label.textContent = `N${i}: `;
+        label.appendChild(inp);
+        degreeDiv.appendChild(label);
+      }
+    });
+
+    // Language selection event listener
+    const langRadios = document.getElementsByName('lang');
+    langRadios.forEach(radio => {
+      radio.addEventListener('change', (event) => {
+        const selectedLanguage = event.target.value;
+        updateUI(selectedLanguage);
+        // Save language preference to local storage
+        localStorage.setItem('selectedLanguage', selectedLanguage);
+      });
+    });
+
+
+    // Trigger population of agent counts and degree inputs at first load
+    (function initDynamicInputs() {
+      const event = new Event('input');
+      document.getElementById('numNodes').dispatchEvent(event);
+      // set connection mode initial display
+      const selectedConn = Array.from(document.getElementsByName('connMode')).find(r => r.checked);
+      if (selectedConn && selectedConn.value === 'probability') {
+        document.getElementById('connectionProbWrapper').style.display = 'inline-block';
+        document.getElementById('degreeInputs').style.display = 'none';
+      } else {
+        document.getElementById('connectionProbWrapper').style.display = 'none';
+        document.getElementById('degreeInputs').style.display = 'flex';
+      }
+    })();
+
+    // Function to set the initial language on page load
+    function setInitialLanguage() {
+        const savedLanguage = localStorage.getItem('selectedLanguage');
+        if (savedLanguage) {
+            currentLanguage = savedLanguage;
+            // Check the corresponding radio button
+            const radios = document.getElementsByName('lang');
+            radios.forEach(radio => {
+                if (radio.value === savedLanguage) {
+                    radio.checked = true;
+                }
+            });
+        } else {
+            // If no saved preference, use the default (ko) and ensure the radio button is checked
+            currentLanguage = 'ko';
+            document.querySelector('input[name="lang"][value="ko"]').checked = true;
+        }
+        // Apply the text mappings for the determined initial language
+        updateUI(currentLanguage);
+    }
+
+
+    // initialize on page load:
+    // 1. Set initial language (from local storage or default)
+    // 2. Initialize environment and draw graph
+    setInitialLanguage(); // Set language first
+    initialize(); // Then initialize simulation
+  </script>
+</body>
+</html>

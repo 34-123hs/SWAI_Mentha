@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>RandomBot 연습 게임</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="practice.js"></script>
+</head>
+<body>
+  <nav>
+    <a href="index.html">홈</a>
+    <a href="simulation.html">시뮬레이션</a>
+    <a href="agents.html">에이전트 소개</a>
+  </nav>
+  <div class="container">
+    <h1>RandomBot 연습 게임</h1>
+    <p>RandomBot은 예측 불가능한 전략을 구사합니다. 매 라운드 공격, 방어, 대기 중 하나를 무작위로 선택하므로,
+    운이 좋아야 승리할 수 있습니다. 무작위성이 어떤 결과를 가져오는지 직접 확인해보세요.</p>
+    <div id="practice-game">
+      <h2>연습 게임</h2>
+      <p id="score"></p>
+      <div id="buttons">
+        <button data-action="attack">공격</button>
+        <button data-action="defend">방어</button>
+        <button data-action="idle">대기</button>
+      </div>
+      <div id="log"></div>
+      <button id="restart-btn">다시 시작</button>
+    </div>
+  </div>
+  <script>
+    initPractice('random');
+  </script>
+</body>
+</html>
