@@ -1,21 +1,76 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <title>자원 전쟁 시뮬레이션</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title data-key="title">전체 시뮬레이션</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .iframe-wrapper {
+      width: 100%;
+      height: 800px;
+      border: none;
+      overflow: hidden;
+    }
+    .iframe-wrapper iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    @media (max-width: 700px) {
+      .iframe-wrapper {
+        height: 600px;
+      }
+    }
+  </style>
 </head>
 <body>
   <nav>
-    <a href="index.html">홈</a>
-    <a href="simulation.html">시뮬레이션</a>
-    <a href="agents.html">에이전트 소개</a>
+    <a href="index.html" data-key="navHome">홈</a>
+    <a href="simulation.html" data-key="navSimulation">시뮬레이션</a>
+    <a href="agents.html" data-key="navAgents">에이전트</a>
   </nav>
-  <div class="container">
-    <h1>전체 시뮬레이션</h1>
-    <p>여기에서는 네트워크 전체에 여러 에이전트를 배치하여 자원 전쟁 시뮬레이션을 실행합니다. 좌측 컨트롤을 사용하여
-    노드 수, 에이전트의 종류, 연결 방식 등을 설정한 후 시뮬레이션을 시작해 보세요.</p>
-    <iframe src="simulation_core.html" width="100%" height="1000" style="border:none;"></iframe>
-  </div>
+  <main class="container">
+    <h1 id="simHeading" data-key="heading">전체 시뮬레이션</h1>
+    <p id="simDescription" data-key="description">시뮬레이션을 통해 다양한 전략이 상호작용하는 모습을 살펴보세요.</p>
+    <div class="iframe-wrapper">
+      <iframe src="simulation_core.html" title="simulation" loading="lazy"></iframe>
+    </div>
+  </main>
+  <script>
+    // Translation dictionary for simulation page
+    const translations = {
+      ko: {
+        title: "전체 시뮬레이션",
+        navHome: "홈",
+        navSimulation: "시뮬레이션",
+        navAgents: "에이전트",
+        heading: "전체 시뮬레이션",
+        description: "시뮬레이션을 통해 다양한 전략이 상호작용하는 모습을 살펴보세요."
+      },
+      en: {
+        title: "Full Simulation",
+        navHome: "Home",
+        navSimulation: "Simulation",
+        navAgents: "Agents",
+        heading: "Full Simulation",
+        description: "Observe how different strategies interact through the simulation."
+      }
+    };
+    function applyTranslations() {
+      const lang = localStorage.getItem('siteLang') || 'ko';
+      document.documentElement.setAttribute('lang', lang);
+      const dict = translations[lang];
+      document.title = dict.title;
+      document.querySelectorAll('[data-key]').forEach(el => {
+        const key = el.getAttribute('data-key');
+        if (dict[key]) {
+          el.textContent = dict[key];
+        }
+      });
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      applyTranslations();
+    });
+  </script>
 </body>
 </html>

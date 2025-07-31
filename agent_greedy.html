@@ -1,35 +1,77 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <title>GreedyBot 연습 게임</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="practice.js"></script>
+  <meta charset="UTF-8">
+  <title data-key="title">욕심 많은 봇 연습</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <nav>
-    <a href="index.html">홈</a>
-    <a href="simulation.html">시뮬레이션</a>
-    <a href="agents.html">에이전트 소개</a>
+    <a href="index.html" data-key="navHome">홈</a>
+    <a href="simulation.html" data-key="navSimulation">시뮬레이션</a>
+    <a href="agents.html" data-key="navAgents">에이전트</a>
   </nav>
-  <div class="container">
-    <h1>GreedyBot 연습 게임</h1>
-    <p>GreedyBot은 가장 부유한 상대를 적극적으로 공격하는 전략을 취합니다. 자원이 많을수록 GreedyBot의 표적이 될
-    확률이 높아집니다. 방어보다는 공격 위주의 스타일을 경험해 보세요.</p>
+  <main class="container">
+    <h1 id="pageHeading" data-key="heading">욕심 많은 봇 연습 게임</h1>
+    <p id="pageDescription" data-key="description">욕심 많은 봇과 연습하세요. 항상 공격하는 전략을 경험해 보세요.</p>
     <div id="practice-game">
-      <h2>연습 게임</h2>
-      <p id="score"></p>
+      <h2 data-key="practiceHeading">연습 게임</h2>
+      <div id="score"></div>
       <div id="buttons">
-        <button data-action="attack">공격</button>
-        <button data-action="defend">방어</button>
-        <button data-action="idle">대기</button>
+        <button data-action="attack" data-key="attackBtn">공격</button>
+        <button data-action="defend" data-key="defendBtn">방어</button>
+        <button data-action="idle" data-key="idleBtn">대기</button>
       </div>
       <div id="log"></div>
-      <button id="restart-btn">다시 시작</button>
+      <button id="restart-btn" data-key="restartBtn">다시 시작</button>
     </div>
-  </div>
+  </main>
+  <script src="practice.js"></script>
   <script>
-    initPractice('greedy');
+    const translations = {
+      ko: {
+        title: "욕심 많은 봇 연습",
+        navHome: "홈",
+        navSimulation: "시뮬레이션",
+        navAgents: "에이전트",
+        heading: "욕심 많은 봇 연습 게임",
+        description: "욕심 많은 봇과 연습하세요. 항상 공격하는 전략을 경험해 보세요.",
+        practiceHeading: "연습 게임",
+        attackBtn: "공격",
+        defendBtn: "방어",
+        idleBtn: "대기",
+        restartBtn: "다시 시작"
+      },
+      en: {
+        title: "Greedy Bot Practice",
+        navHome: "Home",
+        navSimulation: "Simulation",
+        navAgents: "Agents",
+        heading: "Greedy Bot Practice",
+        description: "Practice against the greedy bot. Experience a strategy that always attacks.",
+        practiceHeading: "Practice Game",
+        attackBtn: "Attack",
+        defendBtn: "Defend",
+        idleBtn: "Wait",
+        restartBtn: "Restart"
+      }
+    };
+    function applyTranslations() {
+      const lang = localStorage.getItem('siteLang') || 'ko';
+      document.documentElement.setAttribute('lang', lang);
+      const dict = translations[lang];
+      document.title = dict.title;
+      document.querySelectorAll('[data-key]').forEach(el => {
+        const key = el.getAttribute('data-key');
+        if (dict[key]) {
+          el.textContent = dict[key];
+        }
+      });
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      applyTranslations();
+      initPractice('greedy');
+    });
   </script>
 </body>
 </html>

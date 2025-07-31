@@ -1,16 +1,18 @@
+<!-- simulation_core.html: copied from original index.html with minor adjustments -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>자원 전쟁 시뮬레이션</title>
+  <title>자산 전쟁 시뮬레이션</title>
   <!-- Chart.js library for asset history visualization -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
       margin: 0;
-      padding: 20px;
-      background-color: #f5f5f5;
+      padding: 10px;
+      /* Make the simulation page background transparent so it blends with parent container */
+      background-color: transparent;
     }
     h1 {
       text-align: center;
@@ -62,7 +64,7 @@
   </style>
 </head>
 <body>
-  <h1>그래프 기반 자원 전쟁 시뮬레이션</h1>
+  <h1>그래프 기반 자산 전쟁 시뮬레이션</h1>
   <div id="controls">
     <!-- Language Selection -->
     <div id="languageSelect" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
@@ -163,7 +165,7 @@
         downloadCsvBtnText: "Download CSV"
       },
       ko: {
-        title: "그래프 기반 자원 전쟁 시뮬레이션",
+        title: "그래프 기반 자산 전쟁 시뮬레이션",
         languageLabel: "언어:",
         numNodesLabel: "노드 수:",
         connectionProbLabel: "연결 확률:",
@@ -185,9 +187,9 @@
         legendTitle: "전략 레전드:",
         statusInitial: "초기화 필요",
         statusProgress: (step) => `${step} 스텝 진행됨`,
-        chartTitle: "각 노드의 자원 변화",
+        chartTitle: "각 노드의 자산 변화",
         chartXAxis: "스텝",
-        chartYAxis: "자원",
+        chartYAxis: "자산",
         downloadChartBtnText: "그래프 PNG 다운로드",
         downloadJsonBtnText: "JSON 다운로드",
         downloadCsvBtnText: "CSV 다운로드"
@@ -663,13 +665,15 @@
             assetChanges[id] = 0.0;
           }
           for (const key in damages) {
-              const [i, j] = key.split('_');
-              const victim_asset = this.agents[j].asset;
-              const percent = this.delta * damages[key]; // 예: damages[key]=0.2, delta=1이면 20%
-              const transfer = victim_asset * percent;
-              assetChanges[i] += transfer;
-              assetChanges[j] -= transfer;
-            }
+            const parts = key.split('_');
+            const i = parts[0];
+            const j = parts[1];
+            const victim_asset = this.agents[j].asset;
+            const wanted = this.delta * damages[key];
+            const transfer = Math.min(wanted, victim_asset); // 수정
+            assetChanges[i] += transfer;
+            assetChanges[j] -= transfer;
+          }
 
           // flows 시각화 정보 (assetChanges 건드리지 않음)
           const flows = [];
@@ -1377,6 +1381,29 @@
     // 2. Initialize environment and draw graph
     setInitialLanguage(); // Set language first
     initialize(); // Then initialize simulation
+  </script>
+  <!-- Override the language selection and hide the UI -->
+  <script>
+    (function() {
+      // Determine language from site settings; fallback to previous selectedLanguage
+      const lang = localStorage.getItem('siteLang') || localStorage.getItem('selectedLanguage') || 'ko';
+      // Persist language for this page's original logic
+      localStorage.setItem('selectedLanguage', lang);
+      // Set the radio buttons accordingly
+      const radios = document.getElementsByName('lang');
+      if (radios && radios.forEach) {
+        radios.forEach(r => { r.checked = (r.value === lang); });
+      }
+      // Call updateUI if available
+      if (typeof updateUI === 'function') {
+        updateUI(lang);
+      }
+      // Hide the language selection UI since the site provides its own switcher
+      const langDiv = document.getElementById('languageSelect');
+      if (langDiv) {
+        langDiv.style.display = 'none';
+      }
+    })();
   </script>
 </body>
 </html>

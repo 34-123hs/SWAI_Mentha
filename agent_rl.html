@@ -1,36 +1,79 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <title>RLAgent 연습 게임</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="practice.js"></script>
+  <meta charset="UTF-8">
+  <title data-key="title">강화학습 에이전트 연습</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <nav>
-    <a href="index.html">홈</a>
-    <a href="simulation.html">시뮬레이션</a>
-    <a href="agents.html">에이전트 소개</a>
+    <a href="index.html" data-key="navHome">홈</a>
+    <a href="simulation.html" data-key="navSimulation">시뮬레이션</a>
+    <a href="agents.html" data-key="navAgents">에이전트</a>
   </nav>
-  <div class="container">
-    <h1>RLAgent 연습 게임</h1>
-    <p>RLAgent는 Q‑러닝을 활용하여 매 행동의 가치를 추정하고 최적의 선택을 학습합니다. 게임을 진행할수록 더 적절한
-    전략을 선택하게 되며, 탐험과 탐색 사이의 균형을 맞추기 위해 일정 확률로 무작위 행동을 시도합니다.</p>
+  <main class="container">
+    <h1 id="pageHeading" data-key="heading">강화학습 에이전트 연습 게임</h1>
+    <p id="pageDescription" data-key="description">강화학습 에이전트와 연습하세요. 공격, 방어, 대기 버튼을 눌러 게임을 진행합니다.</p>
     <div id="practice-game">
-      <h2>연습 게임</h2>
-      <p id="score"></p>
+      <h2 data-key="practiceHeading">연습 게임</h2>
+      <div id="score"></div>
       <div id="buttons">
-        <button data-action="attack">공격</button>
-        <button data-action="defend">방어</button>
-        <button data-action="idle">대기</button>
+        <button data-action="attack" data-key="attackBtn">공격</button>
+        <button data-action="defend" data-key="defendBtn">방어</button>
+        <button data-action="idle" data-key="idleBtn">대기</button>
       </div>
       <div id="log"></div>
-      <button id="restart-btn">다시 시작</button>
+      <button id="restart-btn" data-key="restartBtn">다시 시작</button>
     </div>
-  </div>
+  </main>
+  <script src="practice.js"></script>
   <script>
-    // RL 에이전트로 연습 게임을 초기화합니다.
-    initPractice('rl');
+    // Page-specific translations for RL agent practice page
+    const translations = {
+      ko: {
+        title: "강화학습 에이전트 연습",
+        navHome: "홈",
+        navSimulation: "시뮬레이션",
+        navAgents: "에이전트",
+        heading: "강화학습 에이전트 연습 게임",
+        description: "강화학습 에이전트와 연습하세요. 공격, 방어, 대기 버튼을 눌러 게임을 진행합니다.",
+        practiceHeading: "연습 게임",
+        attackBtn: "공격",
+        defendBtn: "방어",
+        idleBtn: "대기",
+        restartBtn: "다시 시작"
+      },
+      en: {
+        title: "Reinforcement Learning Practice",
+        navHome: "Home",
+        navSimulation: "Simulation",
+        navAgents: "Agents",
+        heading: "Reinforcement Learning Agent Practice",
+        description: "Practice against the reinforcement learning agent. Use the Attack, Defend, and Wait buttons to play.",
+        practiceHeading: "Practice Game",
+        attackBtn: "Attack",
+        defendBtn: "Defend",
+        idleBtn: "Wait",
+        restartBtn: "Restart"
+      }
+    };
+
+    function applyTranslations() {
+      const lang = localStorage.getItem('siteLang') || 'ko';
+      document.documentElement.setAttribute('lang', lang);
+      const dict = translations[lang];
+      document.title = dict.title;
+      document.querySelectorAll('[data-key]').forEach(el => {
+        const key = el.getAttribute('data-key');
+        if (dict[key]) {
+          el.textContent = dict[key];
+        }
+      });
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      applyTranslations();
+      initPractice('rl');
+    });
   </script>
 </body>
 </html>

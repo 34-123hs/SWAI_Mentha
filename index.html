@@ -1,34 +1,139 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <title>그래프 기반 자원 전쟁 시뮬레이션</title>
-  <!-- 공통 스타일 시트 -->
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title data-key="title">자산 전쟁 시뮬레이션</title>
+  <!-- Link to shared stylesheet -->
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Additional inline styles for the home page */
+    /* Make the body a flex column so footer stays at the bottom */
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    main.container {
+      flex: 1;
+    }
+
+    .home-hero {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .home-buttons {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 30px;
+    }
+    .home-buttons a {
+      width: 180px;
+    }
+    footer {
+      margin-top: auto;
+      padding: 20px 0;
+      text-align: center;
+      font-size: 0.9em;
+      color: #555;
+    }
+    #language-switcher {
+      margin-top: 20px;
+    }
+    #language-switcher label {
+      margin: 0 10px;
+    }
+  </style>
 </head>
 <body>
-  <!-- 사이트 전체를 아우르는 네비게이션 -->
+  <!-- Navigation bar -->
   <nav>
-    <a href="index.html">홈</a>
-    <a href="simulation.html">시뮬레이션</a>
-    <a href="agents.html">에이전트 소개</a>
+    <a href="index.html" data-key="navHome">홈</a>
+    <a href="simulation.html" data-key="navSimulation">시뮬레이션</a>
+    <a href="agents.html" data-key="navAgents">에이전트</a>
   </nav>
-
-  <div class="container">
-    <h1>그래프 기반 자원 전쟁 시뮬레이션</h1>
-    <p>
-      이 사이트는 여러 전략을 가진 에이전트들이 네트워크 상에서 서로의 자원을 빼앗고 방어하는 상황을 시뮬레이션합니다.
-      간단한 규칙만으로도 어떤 전략이 성공하는지, 나쁜 의도가 어떻게 전체 시스템에 영향을 미치는지 관찰할 수 있습니다. SW.AI 학생들이
-      재미있게 학습할 수 있도록 <em>신뢰의 진화</em>에서 영감을 받아 제작되었습니다.
-    </p>
-    <p>
-      왼쪽 상단의 메뉴를 통해 전체 시뮬레이션을 실행하거나, 각각의 에이전트가 어떤 전략을 쓰는지 살펴보고
-      1:1 연습 게임을 통해 직접 체험해 보세요.
-    </p>
-    <div style="text-align:center; margin-top:30px;">
-      <a href="simulation.html" class="btn">시뮬레이션 시작</a>
-      <a href="agents.html" class="btn">에이전트 둘러보기</a>
+  
+  <!-- Main content area -->
+  <main class="container">
+    <div class="home-hero">
+      <h1 id="heroTitle" data-key="heroTitle">그래프 기반 자산 전쟁 시뮬레이션</h1>
+      <p id="heroSubtitle" data-key="heroSubtitle">다양한 전략과 상호작용을 통해 자산 전쟁을 이해해 보세요.</p>
     </div>
-  </div>
+    <div class="home-buttons">
+      <a href="simulation.html" class="btn" id="simulationBtn" data-key="simulationBtn">전체 시뮬레이션</a>
+      <a href="agents.html" class="btn" id="agentsBtn" data-key="agentsBtn">에이전트 소개</a>
+      <a href="agent_rl.html" class="btn" id="practiceBtn" data-key="practiceBtn">연습 게임</a>
+    </div>
+  </main>
+  
+  <!-- Footer with language switcher -->
+  <footer>
+    <div id="language-switcher">
+      <span id="languageLabel" data-key="footerText">언어 선택:</span>
+      <label><input type="radio" name="lang" value="ko"> 한국어</label>
+      <label><input type="radio" name="lang" value="en"> English</label>
+    </div>
+  </footer>
+
+  <!-- Translation script -->
+  <script>
+    // Translation dictionary for the home page and common navigation
+    const translations = {
+      ko: {
+        title: "그래프 기반 자산 전쟁 시뮬레이션",
+        navHome: "홈",
+        navSimulation: "시뮬레이션",
+        navAgents: "에이전트",
+        heroTitle: "그래프 기반 자산 전쟁 시뮬레이션",
+        heroSubtitle: "다양한 전략과 상호작용을 통해 자산 전쟁을 이해해 보세요.",
+        simulationBtn: "전체 시뮬레이션",
+        agentsBtn: "에이전트 소개",
+        practiceBtn: "연습 게임",
+        footerText: "언어 선택:"
+      },
+      en: {
+        title: "Asset War Simulation",
+        navHome: "Home",
+        navSimulation: "Simulation",
+        navAgents: "Agents",
+        heroTitle: "Graph‑based Asset War Simulation",
+        heroSubtitle: "Explore asset wars through diverse strategies and interactions.",
+        simulationBtn: "Full Simulation",
+        agentsBtn: "Agents Overview",
+        practiceBtn: "Practice Game",
+        footerText: "Language:"
+      }
+    };
+
+    // Apply translations based on saved language setting
+    function applyTranslations() {
+      const lang = localStorage.getItem('siteLang') || 'ko';
+      document.documentElement.setAttribute('lang', lang);
+      const dict = translations[lang];
+      document.title = dict.title;
+      document.querySelectorAll('[data-key]').forEach(el => {
+        const key = el.getAttribute('data-key');
+        if (dict[key]) {
+          el.textContent = dict[key];
+        }
+      });
+      // Set radio selection
+      document.querySelectorAll('#language-switcher input[name="lang"]').forEach(input => {
+        input.checked = input.value === lang;
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      applyTranslations();
+      // Update language on selection
+      document.querySelectorAll('#language-switcher input[name="lang"]').forEach(input => {
+        input.addEventListener('change', (e) => {
+          localStorage.setItem('siteLang', e.target.value);
+          applyTranslations();
+        });
+      });
+    });
+  </script>
 </body>
 </html>

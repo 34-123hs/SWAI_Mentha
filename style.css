@@ -1,7 +1,8 @@
 /*
- * 공통 스타일 시트
- * 전체 사이트의 기본적인 레이아웃과 색감을 정의합니다. 배경으로는 손으로 그린 네트워크를 연상시키는 패턴을 사용하여
- * 신뢰의 진화를 모티프로 한 분위기를 살렸습니다. 대부분의 요소들은 반투명한 박스를 통해 가독성을 높였습니다.
+ * Global style sheet for the Asset War Simulation website
+ * Provides a clean, responsive layout with a hand-drawn network background
+ * and unified typography. Media queries ensure the site remains usable on
+ * mobile devices.
  */
 
 body {
@@ -10,12 +11,12 @@ body {
   font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   line-height: 1.6;
   color: #333;
-  /* 생성된 추상 네트워크 이미지를 바탕화면으로 반복 적용 */
+  /* Light network pattern background */
   background: url('images/background.png') repeat;
   background-size: 400px 400px;
 }
 
-/* 네비게이션 바 스타일 */
+/* Navigation bar styles */
 nav {
   position: sticky;
   top: 0;
@@ -42,7 +43,7 @@ nav a:hover {
   color: #007acc;
 }
 
-/* 메인 컨테이너는 반투명한 박스로 내용이 들어가는 부분입니다 */
+/* Main container for page content */
 .container {
   max-width: 960px;
   margin: 40px auto;
@@ -52,8 +53,9 @@ nav a:hover {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
 }
 
-/* 버튼에 대한 기본 스타일 */
-button {
+/* Generic button style */
+button,
+.btn {
   background: #2980b9;
   color: #fff;
   border: none;
@@ -62,28 +64,15 @@ button {
   border-radius: 4px;
   font-size: 1em;
   cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-button:hover {
-  background: #1f5fa7;
-}
-
-/* 링크를 버튼처럼 사용하기 위한 클래스 */
-.btn {
-  display: inline-block;
-  background: #27ae60;
-  color: #fff;
-  padding: 10px 20px;
-  margin: 5px;
-  border-radius: 4px;
   text-decoration: none;
+  display: inline-block;
   font-weight: 600;
   transition: background 0.3s ease;
 }
 
+button:hover,
 .btn:hover {
-  background: #1e8449;
+  background: #1f5fa7;
 }
 
 button:disabled {
@@ -91,7 +80,7 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* 에이전트 소개 페이지에서 사용될 카드 스타일 */
+/* Agent card styling */
 .agent-card {
   border: 2px solid #ecf0f1;
   padding: 20px;
@@ -103,7 +92,6 @@ button:disabled {
 
 .agent-card h3 {
   margin-top: 0;
-  color: #e74c3c;
 }
 
 .agent-card p {
@@ -118,13 +106,15 @@ button:disabled {
   padding: 6px 12px;
   border-radius: 4px;
   text-decoration: none;
+  font-weight: 600;
+  transition: background 0.3s ease;
 }
 
 .agent-card a:hover {
   background: #1e8449;
 }
 
-/* 연습 게임 UI 스타일 */
+/* Practice game section */
 #practice-game {
   margin-top: 30px;
   padding: 20px;
@@ -170,4 +160,39 @@ button:disabled {
 
 #restart-btn:hover {
   background: #cf711c;
+}
+
+/* Language switcher styling */
+#language-switcher {
+  margin-top: 40px;
+  text-align: center;
+}
+
+#language-switcher label {
+  margin: 0 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#language-switcher input {
+  margin-right: 6px;
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 700px) {
+  nav {
+    flex-direction: column;
+    gap: 15px;
+    padding: 10px 0;
+  }
+  .container {
+    margin: 20px 10px;
+    padding: 20px;
+  }
+  #buttons {
+    flex-direction: column;
+  }
+  #buttons button {
+    width: 100%;
+  }
 }

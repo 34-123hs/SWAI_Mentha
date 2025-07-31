@@ -1,35 +1,77 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <title>TurtleBot 연습 게임</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="practice.js"></script>
+  <meta charset="UTF-8">
+  <title data-key="title">거북이 봇 연습</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <nav>
-    <a href="index.html">홈</a>
-    <a href="simulation.html">시뮬레이션</a>
-    <a href="agents.html">에이전트 소개</a>
+    <a href="index.html" data-key="navHome">홈</a>
+    <a href="simulation.html" data-key="navSimulation">시뮬레이션</a>
+    <a href="agents.html" data-key="navAgents">에이전트</a>
   </nav>
-  <div class="container">
-    <h1>TurtleBot 연습 게임</h1>
-    <p>TurtleBot은 공격을 최소화하고 방어에 대부분의 자원을 투자합니다. 때때로 소량 공격을 하지만, 자원을 지키는
-    데에 초점을 맞춘 플레이를 경험할 수 있습니다.</p>
+  <main class="container">
+    <h1 id="pageHeading" data-key="heading">거북이 봇 연습 게임</h1>
+    <p id="pageDescription" data-key="description">거북이 봇과 연습하세요. 주로 방어하고 가끔 공격하는 전략을 경험해 보세요.</p>
     <div id="practice-game">
-      <h2>연습 게임</h2>
-      <p id="score"></p>
+      <h2 data-key="practiceHeading">연습 게임</h2>
+      <div id="score"></div>
       <div id="buttons">
-        <button data-action="attack">공격</button>
-        <button data-action="defend">방어</button>
-        <button data-action="idle">대기</button>
+        <button data-action="attack" data-key="attackBtn">공격</button>
+        <button data-action="defend" data-key="defendBtn">방어</button>
+        <button data-action="idle" data-key="idleBtn">대기</button>
       </div>
       <div id="log"></div>
-      <button id="restart-btn">다시 시작</button>
+      <button id="restart-btn" data-key="restartBtn">다시 시작</button>
     </div>
-  </div>
+  </main>
+  <script src="practice.js"></script>
   <script>
-    initPractice('turtle');
+    const translations = {
+      ko: {
+        title: "거북이 봇 연습",
+        navHome: "홈",
+        navSimulation: "시뮬레이션",
+        navAgents: "에이전트",
+        heading: "거북이 봇 연습 게임",
+        description: "거북이 봇과 연습하세요. 주로 방어하고 가끔 공격하는 전략을 경험해 보세요.",
+        practiceHeading: "연습 게임",
+        attackBtn: "공격",
+        defendBtn: "방어",
+        idleBtn: "대기",
+        restartBtn: "다시 시작"
+      },
+      en: {
+        title: "Turtle Bot Practice",
+        navHome: "Home",
+        navSimulation: "Simulation",
+        navAgents: "Agents",
+        heading: "Turtle Bot Practice",
+        description: "Practice against the turtle bot. Experience a strategy that mainly defends and occasionally attacks.",
+        practiceHeading: "Practice Game",
+        attackBtn: "Attack",
+        defendBtn: "Defend",
+        idleBtn: "Wait",
+        restartBtn: "Restart"
+      }
+    };
+    function applyTranslations() {
+      const lang = localStorage.getItem('siteLang') || 'ko';
+      document.documentElement.setAttribute('lang', lang);
+      const dict = translations[lang];
+      document.title = dict.title;
+      document.querySelectorAll('[data-key]').forEach(el => {
+        const key = el.getAttribute('data-key');
+        if (dict[key]) {
+          el.textContent = dict[key];
+        }
+      });
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      applyTranslations();
+      initPractice('turtle');
+    });
   </script>
 </body>
 </html>

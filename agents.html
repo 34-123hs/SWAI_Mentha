@@ -1,55 +1,127 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <title>에이전트 소개</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title data-key="title">에이전트 소개</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .agents-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    @media (min-width: 700px) {
+      .agents-grid {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-between;
+      }
+      .agent-card {
+        width: calc(50% - 10px);
+      }
+    }
+  </style>
 </head>
 <body>
   <nav>
-    <a href="index.html">홈</a>
-    <a href="simulation.html">시뮬레이션</a>
-    <a href="agents.html">에이전트 소개</a>
+    <a href="index.html" data-key="navHome">홈</a>
+    <a href="simulation.html" data-key="navSimulation">시뮬레이션</a>
+    <a href="agents.html" data-key="navAgents">에이전트</a>
   </nav>
-  <div class="container">
-    <h1>에이전트 소개</h1>
-    <p>시뮬레이션에 등장하는 다섯 종류의 에이전트는 각기 다른 전략을 가지고 있습니다. 아래에서 간단한 설명을 읽고,
-    상세 페이지에서 연습 게임을 플레이해보세요.</p>
-
-    <div class="agent-card" style="border-color:#e74c3c;">
-      <h3>RLAgent (강화학습 에이전트)</h3>
-      <p>Q‑러닝을 사용하여 가능한 행동들의 가치를 학습합니다. 일정 확률로 무작위 행동을 시도하며, 얻은 보상에 따라
-      다음 행동을 점점 더 똑똑하게 선택합니다.</p>
-      <a href="agent_rl.html">연습 게임 →</a>
+  <main class="container">
+    <h1 id="agentsHeading" data-key="agentsHeading">에이전트 소개</h1>
+    <div class="agents-grid">
+      <div class="agent-card">
+        <h3 data-key="rlTitle">강화학습 에이전트</h3>
+        <p data-key="rlDesc">강화학습을 통해 최적의 전략을 학습합니다.</p>
+        <a href="agent_rl.html" class="btn" data-key="rlPractice">연습하기</a>
+      </div>
+      <div class="agent-card">
+        <h3 data-key="greedyTitle">욕심 많은 봇</h3>
+        <p data-key="greedyDesc">단기 이득 극대화를 위해 항상 공격합니다.</p>
+        <a href="agent_greedy.html" class="btn" data-key="greedyPractice">연습하기</a>
+      </div>
+      <div class="agent-card">
+        <h3 data-key="turtleTitle">거북이 봇</h3>
+        <p data-key="turtleDesc">주로 방어하며 때때로 공격합니다.</p>
+        <a href="agent_turtle.html" class="btn" data-key="turtlePractice">연습하기</a>
+      </div>
+      <div class="agent-card">
+        <h3 data-key="randomTitle">무작위 봇</h3>
+        <p data-key="randomDesc">무작위로 행동을 선택합니다.</p>
+        <a href="agent_random.html" class="btn" data-key="randomPractice">연습하기</a>
+      </div>
+      <div class="agent-card">
+        <h3 data-key="adaptiveTitle">적응형 봇</h3>
+        <p data-key="adaptiveDesc">상대의 이전 행동에 따라 전략을 조정합니다.</p>
+        <a href="agent_adaptive.html" class="btn" data-key="adaptivePractice">연습하기</a>
+      </div>
     </div>
+  </main>
+  <script>
+    // Translation dictionary for agents page
+    const translations = {
+      ko: {
+        title: "에이전트 소개",
+        navHome: "홈",
+        navSimulation: "시뮬레이션",
+        navAgents: "에이전트",
+        agentsHeading: "에이전트 소개",
+        rlTitle: "강화학습 에이전트",
+        rlDesc: "강화학습을 통해 최적의 전략을 학습합니다.",
+        rlPractice: "연습하기",
+        greedyTitle: "욕심 많은 봇",
+        greedyDesc: "단기 이득 극대화를 위해 항상 공격합니다.",
+        greedyPractice: "연습하기",
+        turtleTitle: "거북이 봇",
+        turtleDesc: "주로 방어하며 때때로 공격합니다.",
+        turtlePractice: "연습하기",
+        randomTitle: "무작위 봇",
+        randomDesc: "무작위로 행동을 선택합니다.",
+        randomPractice: "연습하기",
+        adaptiveTitle: "적응형 봇",
+        adaptiveDesc: "상대의 이전 행동에 따라 전략을 조정합니다.",
+        adaptivePractice: "연습하기"
+      },
+      en: {
+        title: "Agents Overview",
+        navHome: "Home",
+        navSimulation: "Simulation",
+        navAgents: "Agents",
+        agentsHeading: "Agents Overview",
+        rlTitle: "Reinforcement Learning Agent",
+        rlDesc: "Learns optimal strategies through reinforcement learning.",
+        rlPractice: "Practice",
+        greedyTitle: "Greedy Bot",
+        greedyDesc: "Always attacks to maximize short‑term gain.",
+        greedyPractice: "Practice",
+        turtleTitle: "Turtle Bot",
+        turtleDesc: "Mainly defends while occasionally attacking.",
+        turtlePractice: "Practice",
+        randomTitle: "Random Bot",
+        randomDesc: "Chooses actions randomly.",
+        randomPractice: "Practice",
+        adaptiveTitle: "Adaptive Bot",
+        adaptiveDesc: "Adjusts strategy based on the opponent's previous move.",
+        adaptivePractice: "Practice"
+      }
+    };
 
-    <div class="agent-card" style="border-color:#27ae60;">
-      <h3>GreedyBot (탐욕형 봇)</h3>
-      <p>가장 자원이 많은 상대를 집중 공격합니다. 자원이 많을수록 더 큰 위험에 노출되는 것처럼, 욕심 많은 전략을
-      보여줍니다.</p>
-      <a href="agent_greedy.html">연습 게임 →</a>
-    </div>
-
-    <div class="agent-card" style="border-color:#2980b9;">
-      <h3>TurtleBot (거북이 봇)</h3>
-      <p>공격보다는 방어에 집중합니다. 때로는 소극적으로 보일 수 있지만, 장기적으로 자원을 지키는 데 탁월할 수
-      있습니다.</p>
-      <a href="agent_turtle.html">연습 게임 →</a>
-    </div>
-
-    <div class="agent-card" style="border-color:#8e44ad;">
-      <h3>RandomBot (무작위 봇)</h3>
-      <p>말 그대로 매 라운드 무작위로 공격, 방어, 대기 중 하나를 선택합니다. 예측 불가능한 상대를 만나고 싶다면
-      선택해보세요.</p>
-      <a href="agent_random.html">연습 게임 →</a>
-    </div>
-
-    <div class="agent-card" style="border-color:#e67e22;">
-      <h3>AdaptiveBot (적응형 봇)</h3>
-      <p>최근에 얼마나 성공했는지에 따라 공격 비율을 조금씩 조절합니다. 자기를 자주 공격하는 상대를 더 강력하게
-      방어하는 특징이 있습니다.</p>
-      <a href="agent_adaptive.html">연습 게임 →</a>
-    </div>
-  </div>
+    function applyTranslations() {
+      const lang = localStorage.getItem('siteLang') || 'ko';
+      document.documentElement.setAttribute('lang', lang);
+      const dict = translations[lang];
+      document.title = dict.title;
+      document.querySelectorAll('[data-key]').forEach(el => {
+        const key = el.getAttribute('data-key');
+        if (dict[key]) {
+          el.textContent = dict[key];
+        }
+      });
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      applyTranslations();
+    });
+  </script>
 </body>
 </html>
